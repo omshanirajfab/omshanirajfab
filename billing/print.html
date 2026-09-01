@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tax Invoice - Print Preview</title>
+  <link rel="stylesheet" href="css/print.css" />
+  <style>
+    .print-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 9999;
+      background: #0f172a;
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .print-toolbar-title {
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .print-btn-group {
+      display: flex;
+      gap: 12px;
+    }
+    .btn-action-print {
+      background: #10b981;
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+      transition: transform 0.1s, background 0.2s;
+    }
+    .btn-action-print:hover {
+      background: #059669;
+      transform: translateY(-1px);
+    }
+    .btn-action-close {
+      background: #475569;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-action-close:hover {
+      background: #334155;
+    }
+
+    @media print {
+      .print-toolbar, .no-print {
+        display: none !important;
+        height: 0 !important;
+        visibility: hidden !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="print-toolbar no-print">
+    <div class="print-toolbar-title">
+      <span>📄</span>
+      <span id="toolbarInvoiceTitle">OSF Tax Invoice Preview</span>
+    </div>
+    <div class="print-btn-group">
+      <button type="button" class="btn-action-print" onclick="window.print()">
+        🖨️ Save as PDF / Print Invoice
+      </button>
+      <button type="button" class="btn-action-close" onclick="window.close()">
+        ✕ Close Window
+      </button>
+    </div>
+  </div>
+
+  <div class="invoice-sheet-container">
+    <div class="invoice-sheet" id="invoiceSheetRoot">
+      <!-- Generated Tax Invoice Injected Here -->
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    function renderInvoiceNow() {
+      try {
+        OSFApp.loadState();
+        
+        var urlParams = new URLSearchParams(window.location.search);
+        var invId = urlParams.get('id');
+
+        var inv = null;
+        var draft = localStorage.getItem(OSFApp.STORAGE_KEYS.ACTIVE_INV);
+        if (draft) {
+          try { inv = JSON.parse(draft); } catch(e) {}
+        }
+
+        if (!inv && invId && OSFApp.state.invoices) {
+          inv = OSFApp.state.invoices.find(function(i) { return i.id === invId; });
+        }
+
+        if (!inv && OSFApp.state.invoices && OSFApp.state.invoices.length > 0) {
+          inv = OSFApp.state.invoices[0];
+        }
+
+        if (!inv) {
+          OSFApp.createNewInvoice();
+          inv = OSFApp.state.currentInvoice;
+        }
+
+        if (inv) {
+          document.title = "Tax Invoice - " + (inv.invoiceNo || "OSF");
+          var titleEl = document.getElementById('toolbarInvoiceTitle');
+          if (titleEl) titleEl.innerText = "Tax Invoice: " + (inv.invoiceNo || "OSF");
+
+          var html = OSFApp.generateInvoiceHTML(inv);
+          var root = document.getElementById('invoiceSheetRoot');
+          if (root) root.innerHTML = html;
+        }
+      } catch(err) {
+        console.error("Print render error:", err);
+      }
+    }
+
+    renderInvoiceNow();
+  </script>
+</body>
+</html>

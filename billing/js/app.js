@@ -194,7 +194,7 @@ var OSFApp = {
       billType: "Only Labour Charges",
       placeOfSupply: (this.state.company && this.state.company.defaultPlaceOfSupply) || "Maharashtra (27)",
       poNumber: "NA",
-      poDate: "NA",
+      poDate: todayStr,
       transport: "NA",
       vehicleNo: "",
       billedTo: {
@@ -212,36 +212,42 @@ var OSFApp = {
       items: [
         {
           id: "item_1",
-          description: "Structure Fabrication",
+          description: "",
           hsn: "995413",
-          qty: 33193,
+          qty: 0,
           unit: "KG",
-          rate: 14.00,
-          taxable: 464702.00,
+          rate: 0,
+          taxable: 0,
           gstRate: 18,
-          cgstAmt: 41823.18,
-          sgstAmt: 41823.18,
-          igstAmt: 0.00,
-          total: 548348.36
+          cgstAmt: 0,
+          sgstAmt: 0,
+          igstAmt: 0,
+          total: 0
         }
       ],
-      totalQty: 33193,
-      subTotal: 464702.00,
-      cgstTotal: 41823.18,
-      sgstTotal: 41823.18,
-      igstTotal: 0.00,
-      totalTax: 83646.36,
+      totalQty: 0,
+      subTotal: 0,
+      cgstTotal: 0,
+      sgstTotal: 0,
+      igstTotal: 0,
+      totalTax: 0,
       roundOff: 0.00,
-      grandTotal: 548348.00,
-      amountInWords: "",
-      taxInWords: "",
+      grandTotal: 0,
+      amountInWords: "Zero Rupees Only",
+      taxInWords: "Zero Rupees Only",
       terms: ((this.state.company && this.state.company.termsAndConditions) || []).slice()
     };
+
+    var clientSel = document.getElementById('clientSelect');
+    if (clientSel) clientSel.value = '';
+
+    var sameCheck = document.getElementById('sameAsBilled');
+    if (sameCheck) sameCheck.checked = false;
+
     this.populateInvoiceForm();
     this.calculateTotals();
     this.saveState();
-    this.updateLivePreview();
-    
+    this.showToast("Invoice form reset to new blank invoice!");
   },
 
   populateInvoiceForm: function() {

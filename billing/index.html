@@ -448,9 +448,10 @@
               <label>Branch</label>
               <input type="text" id="settBranch" class="form-control" />
             </div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-primary" onclick="OSFApp.saveCompanySettings()">💾 Save Profile & Bank Info</button>
+            <button type="button" class="btn btn-outline" onclick="OSFApp.resetCompanySettingsToDefault()">🔄 Reset to OSF Defaults</button>
           </div>
-          <button type="button" class="btn btn-primary" onclick="OSFApp.saveCompanySettings()">💾 Save Profile & Bank Info</button>
-        </div>
 
         <!-- Invoice Numbering & Backup -->
         <div>

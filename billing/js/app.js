@@ -107,7 +107,7 @@ var OSFApp = {
   loadState: function() {
     try {
       var savedComp = localStorage.getItem(this.STORAGE_KEYS.COMPANY);
-      this.state.company = savedComp ? JSON.parse(savedComp) : Object.assign({}, DEFAULT_COMPANY_CONFIG);
+      this.state.company = savedComp ? Object.assign({}, DEFAULT_COMPANY_CONFIG, JSON.parse(savedComp)) : Object.assign({}, DEFAULT_COMPANY_CONFIG);
 
       var savedClients = localStorage.getItem(this.STORAGE_KEYS.CLIENTS);
       this.state.clients = savedClients ? JSON.parse(savedClients) : DEFAULT_CLIENTS.slice();
@@ -1009,7 +1009,7 @@ var OSFApp = {
                   <div class="inv-company-details">
                     <div>${comp.address}</div>
                     <div style="margin-top: 1px;"><span class="inv-bold">GSTIN:</span> ${comp.gstin} &nbsp;|&nbsp; <span class="inv-bold">PAN:</span> ${comp.pan}</div>
-                    <div><span class="inv-bold">Phone:</span> ${comp.phone} &nbsp;|&nbsp; <span class="inv-bold">Email:</span> ${comp.email} &nbsp;|&nbsp; <span class="inv-bold">Web:</span> ${comp.website || "www.omshanifab.in"}</div>
+                    <div><span class="inv-bold">Phone:</span> ${comp.phone} &nbsp;|&nbsp; <span class="inv-bold">Email:</span> ${comp.email} &nbsp;|&nbsp; <span class="inv-bold">Web:</span> ${comp.website || "omshanirajfab.in"}</div>
                   </div>
                 </td>
                 <td style="width: 135px; border: none;"></td>
@@ -1486,6 +1486,14 @@ var OSFApp = {
     this.saveState();
     this.renderDashboardBankDetails();
     this.showToast("Company profile & settings saved successfully!");
+  },
+
+  resetCompanySettingsToDefault: function() {
+    if (!confirm("Are you sure you want to reset all company settings to official OSF defaults?")) return;
+    this.state.company = Object.assign({}, DEFAULT_COMPANY_CONFIG);
+    this.saveState();
+    this.populateCompanySettings();
+    this.showToast("Company profile & settings reset to official defaults!");
   },
 
   downloadBackupJSON: function() {

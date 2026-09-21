@@ -836,9 +836,6 @@ var OSFApp = {
       isInterState = true;
     }
 
-    var isOnlyLabour = (inv.billType === "Only Labour Charges" || !inv.billType);
-    var firstRowTitle = isOnlyLabour ? "Only Labour Charges" : "With Labour & Material";
-
     var totalQty = 0;
     var totalTaxable = 0;
     var totalCgst = 0;
@@ -899,21 +896,23 @@ var OSFApp = {
 
     var itemsRowsHtml = "";
 
-    // 1. First Row: * Only Labour Charges / With Labour & Material (No HSN, no qty/rate/gst/net)
-    itemsRowsHtml += `
-      <tr class="inv-tally-item-row">
-        <td class="text-center" style="font-weight: bold;">*</td>
-        <td class="text-left" style="font-weight: bold; font-size: 10.5px;">${firstRowTitle}</td>
-        <td class="text-center"></td>
-        <td class="text-right"></td>
-        <td class="text-center"></td>
-        <td class="text-right"></td>
-        <td class="text-right"></td>
-        <td class="text-center"></td>
-        <td class="text-right"></td>
-        <td class="text-right"></td>
-      </tr>
-    `;
+    // 1. First Row: Only render if "Only Labour Charges" is selected. If "With Material", do not show on bill.
+    if (inv.billType === "Only Labour Charges") {
+      itemsRowsHtml += `
+        <tr class="inv-tally-item-row">
+          <td class="text-center" style="font-weight: bold;">*</td>
+          <td class="text-left" style="font-weight: bold; font-size: 10.5px;">Only Labour Charges</td>
+          <td class="text-center"></td>
+          <td class="text-right"></td>
+          <td class="text-center"></td>
+          <td class="text-right"></td>
+          <td class="text-right"></td>
+          <td class="text-center"></td>
+          <td class="text-right"></td>
+          <td class="text-right"></td>
+        </tr>
+      `;
+    }
 
     // 2. Product Items (Zero Horizontal Inner Lines)
     if (inv.items && inv.items.length > 0) {

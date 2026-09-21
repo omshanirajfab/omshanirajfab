@@ -1502,6 +1502,23 @@ var OSFApp = {
     this.showToast("Company profile & settings saved successfully!");
   },
 
+  clearBrowserCacheAndReload: function() {
+    try {
+      if (window.caches) {
+        caches.keys().then(function(keys) {
+          keys.forEach(function(key) { caches.delete(key); });
+        });
+      }
+      if (window.sessionStorage) sessionStorage.clear();
+      // Remove temporary caches
+    } catch(e) {}
+    this.showToast("Purging browser cache and reloading...");
+    setTimeout(function() {
+      var sep = window.location.href.indexOf('?') >= 0 ? '&' : '?';
+      window.location.href = window.location.pathname + sep + 't=' + Date.now();
+    }, 400);
+  },
+
   fetchGstDetails: async function(target) {
     target = target || 'billed';
     var isBilled = target === 'billed';

@@ -22,17 +22,15 @@
   max-width: 210mm;
   min-height: 285mm;
   background: #ffffff;
-  padding: 4mm 6mm;
+  padding: 6mm 8mm;
   color: #000000;
   box-sizing: border-box;
   font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
-  font-size: 10.5px;
+  font-size: 11px;
   line-height: 1.25;
   box-shadow: 0 4px 20px rgba(0,0,0,0.3);
   margin: 0 auto;
   position: relative;
-  page-break-inside: avoid !important;
-  break-inside: avoid !important;
 }
 
 /* Master Outer Border Table */
@@ -42,14 +40,12 @@
   border-collapse: collapse;
   table-layout: fixed;
   background: #ffffff;
-  page-break-inside: avoid !important;
-  break-inside: avoid !important;
 }
 
 .inv-outer-table > tbody > tr > td, 
 .inv-outer-table > tr > td {
   border: 1px solid #000000;
-  padding: 2.5px 4px;
+  padding: 3px 5px;
   vertical-align: top;
   background: #ffffff;
 }
@@ -57,7 +53,7 @@
 /* Copy Type Header Banner */
 .inv-top-copy {
   text-align: right;
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 900;
   color: #0f172a;
   text-transform: uppercase;
@@ -148,7 +144,7 @@
   border-left: 1px solid #000000 !important;
   border-right: 1px solid #000000 !important;
   padding: 0 !important;
-  height: 40mm; /* Fills standard A4 page cleanly without any second page */
+  height: 82mm; /* Proportional full A4 page fit */
   background: #ffffff !important;
 }
 
@@ -159,8 +155,8 @@
   border-right: 1px solid #000000 !important;
   font-weight: bold;
   background-color: #fafafa !important;
-  padding: 3px 4px !important;
-  font-size: 10px;
+  padding: 4px !important;
+  font-size: 10.5px;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
@@ -187,12 +183,12 @@
 }
 
 /* ==========================================================================
-   PRINT MEDIA QUERY - STANDARD A4 EXACT 1-PAGE FIT
+   PRINT MEDIA QUERY - MULTI-PAGE ORIGINAL / DUPLICATE / TRIPLICATE
    ========================================================================== */
 @media print {
   @page {
     size: A4 portrait;
-    margin: 4mm 5mm;
+    margin: 5mm;
   }
 
   html, body {
@@ -208,7 +204,7 @@
   }
 
   /* 1. HIDE ALL SIBLINGS OF APP CONTAINER */
-  body > *:not(.app-container):not(.invoice-sheet-container) {
+  body > *:not(.app-container) {
     display: none !important;
     height: 0 !important;
     visibility: hidden !important;
@@ -223,7 +219,6 @@
 
   /* 2. HIDE HEADER, NAVIGATION AND NON-BUILDER VIEWS */
   .top-header,
-  .print-toolbar,
   .app-container > nav,
   #invoiceHistoryView,
   #clientsMasterView,
@@ -282,32 +277,35 @@
     padding: 0 !important;
   }
 
-  /* INDIVIDUAL INVOICE PAGE SHEETS (EXACT 1 A4 PAGE FIT) */
+  /* INDIVIDUAL INVOICE PAGE SHEETS (PAGE BREAK BETWEEN SHEETS) */
   .invoice-sheet {
     display: block !important;
     width: 100% !important;
     max-width: 100% !important;
     height: auto !important;
     min-height: auto !important;
-    margin: 0 !important;
+    margin: 0 0 0 0 !important;
     padding: 0 !important;
     box-shadow: none !important;
     border: none !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+  }
+
+  /* Page break after each sheet except the last one */
+  .invoice-sheet:not(:last-child) {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  .invoice-sheet:last-child {
     page-break-after: avoid !important;
-    break-after: avoid !important;
+    break-after: auto !important;
   }
 
   .inv-outer-table {
     width: 100% !important;
     border: 1.5px solid #000000 !important;
     page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-
-  tr, td, th, tbody, table {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
   }
 }

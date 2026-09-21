@@ -20,17 +20,21 @@
 .invoice-sheet {
   width: 210mm;
   max-width: 210mm;
-  min-height: 285mm;
+  min-height: 300mm;
+  max-height: 310mm;
   background: #ffffff;
-  padding: 6mm 8mm;
+  padding: 3mm 4mm;
   color: #000000;
   box-sizing: border-box;
   font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
-  font-size: 11px;
-  line-height: 1.25;
+  font-size: 10px;
+  line-height: 1.2;
   box-shadow: 0 4px 20px rgba(0,0,0,0.3);
   margin: 0 auto;
   position: relative;
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+  overflow: hidden;
 }
 
 /* Master Outer Border Table */
@@ -40,12 +44,14 @@
   border-collapse: collapse;
   table-layout: fixed;
   background: #ffffff;
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
 }
 
 .inv-outer-table > tbody > tr > td, 
 .inv-outer-table > tr > td {
   border: 1px solid #000000;
-  padding: 3px 5px;
+  padding: 2.5px 4px;
   vertical-align: top;
   background: #ffffff;
 }
@@ -53,7 +59,7 @@
 /* Copy Type Header Banner */
 .inv-top-copy {
   text-align: right;
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 900;
   color: #0f172a;
   text-transform: uppercase;
@@ -144,7 +150,7 @@
   border-left: 1px solid #000000 !important;
   border-right: 1px solid #000000 !important;
   padding: 0 !important;
-  height: 82mm; /* Proportional full A4 page fit */
+  height: 20mm; /* Clean proportional fit strictly within 310mm on 1 page */
   background: #ffffff !important;
 }
 
@@ -155,8 +161,8 @@
   border-right: 1px solid #000000 !important;
   font-weight: bold;
   background-color: #fafafa !important;
-  padding: 4px !important;
-  font-size: 10.5px;
+  padding: 3px 4px !important;
+  font-size: 10px;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
@@ -168,13 +174,13 @@
 
 /* Tax and Bank Summary Area */
 .inv-bank-section {
-  font-size: 9.5px;
-  line-height: 1.35;
+  font-size: 9px;
+  line-height: 1.3;
 }
 
 .inv-tc-section {
-  font-size: 8.5px;
-  line-height: 1.25;
+  font-size: 8px;
+  line-height: 1.2;
 }
 
 .inv-tc-section ol {
@@ -183,35 +189,37 @@
 }
 
 /* ==========================================================================
-   PRINT MEDIA QUERY - MULTI-PAGE ORIGINAL / DUPLICATE / TRIPLICATE
+   PRINT MEDIA QUERY - 210mm X 310mm SINGLE PAGE FIT
    ========================================================================== */
 @media print {
   @page {
-    size: A4 portrait;
-    margin: 5mm;
+    size: 210mm 310mm;
+    margin: 0mm;
   }
 
   html, body {
-    width: 100% !important;
-    height: auto !important;
+    width: 210mm !important;
+    height: 310mm !important;
+    max-width: 210mm !important;
+    max-height: 310mm !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #ffffff !important;
     color: #000000 !important;
-    overflow: visible !important;
+    overflow: hidden !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
   /* 1. HIDE ALL SIBLINGS OF APP CONTAINER */
-  body > *:not(.app-container) {
+  body > *:not(.app-container):not(.invoice-sheet-container) {
     display: none !important;
     height: 0 !important;
     visibility: hidden !important;
   }
 
   .app-container {
-    max-width: 100% !important;
+    max-width: 210mm !important;
     margin: 0 !important;
     padding: 0 !important;
     display: block !important;
@@ -219,6 +227,7 @@
 
   /* 2. HIDE HEADER, NAVIGATION AND NON-BUILDER VIEWS */
   .top-header,
+  .print-toolbar,
   .app-container > nav,
   #invoiceHistoryView,
   #clientsMasterView,
@@ -272,22 +281,24 @@
 
   .invoice-sheet-container {
     display: block !important;
-    width: 100% !important;
+    width: 210mm !important;
     margin: 0 !important;
     padding: 0 !important;
   }
 
-  /* INDIVIDUAL INVOICE PAGE SHEETS (PAGE BREAK BETWEEN SHEETS) */
+  /* INDIVIDUAL INVOICE PAGE SHEETS (STRICT 210mm x 310mm SINGLE PAGE FIT) */
   .invoice-sheet {
     display: block !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-    min-height: auto !important;
-    margin: 0 0 0 0 !important;
-    padding: 0 !important;
+    width: 210mm !important;
+    max-width: 210mm !important;
+    height: 310mm !important;
+    max-height: 310mm !important;
+    margin: 0 !important;
+    padding: 3mm 4mm !important;
+    box-sizing: border-box !important;
     box-shadow: none !important;
     border: none !important;
+    overflow: hidden !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
@@ -307,5 +318,11 @@
     width: 100% !important;
     border: 1.5px solid #000000 !important;
     page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  tr, td, th, tbody, table {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 }

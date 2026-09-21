@@ -566,7 +566,7 @@ var OSFApp = {
     ['invNumber', 'invDate', 'invBillType', 'invPlaceOfSupply', 'invPoNumber', 'invPoDate', 'invTransport', 'invVehicleNo'].forEach(function(id) {
       var el = document.getElementById(id);
       if (el) {
-        el.addEventListener('change', function() {
+        var updateFn = function() {
           var field = id === 'invNumber' ? 'invoiceNo' :
                       id === 'invDate' ? 'invoiceDate' :
                       id === 'invBillType' ? 'billType' :
@@ -577,7 +577,9 @@ var OSFApp = {
           self.state.currentInvoice[field] = this.value;
           if (field === 'placeOfSupply' || field === 'billType') self.calculateTotals();
           else self.saveState();
-        });
+        };
+        el.addEventListener('change', updateFn);
+        el.addEventListener('input', updateFn);
       }
     });
 

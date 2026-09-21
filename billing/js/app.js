@@ -658,11 +658,20 @@ var OSFApp = {
 
   renderPlaceOfSupplyDropdown: function() {
     var select = document.getElementById('invPlaceOfSupply');
-    if (!select) return;
-    select.innerHTML = INDIAN_STATES.map(function(s) {
-      return `<option value="${s.name}">${s.name}</option>`;
-    }).join('');
-    select.value = "Maharashtra (27)";
+    if (select) {
+      select.innerHTML = INDIAN_STATES.map(function(s) {
+        return `<option value="${s.name}">${s.name}</option>`;
+      }).join('');
+      select.value = "Maharashtra (27)";
+    }
+
+    var clientStateSelect = document.getElementById('clientFormState');
+    if (clientStateSelect) {
+      clientStateSelect.innerHTML = INDIAN_STATES.map(function(s) {
+        return `<option value="${s.name}">${s.name}</option>`;
+      }).join('');
+      clientStateSelect.value = "Maharashtra (27)";
+    }
   },
 
   saveCurrentInvoiceToHistory: function(silent) {
@@ -1255,6 +1264,8 @@ var OSFApp = {
     document.getElementById('clientFormGstin').value = "";
     document.getElementById('clientFormAddress').value = "";
     document.getElementById('clientFormState').value = "Maharashtra (27)";
+    var badge = document.getElementById('clientModalGstBadge');
+    if (badge) badge.style.display = 'none';
     document.getElementById('clientModal').classList.add('active');
   },
 
@@ -1267,6 +1278,8 @@ var OSFApp = {
     document.getElementById('clientFormGstin').value = c.gstin || '';
     document.getElementById('clientFormAddress').value = c.address || '';
     document.getElementById('clientFormState').value = c.state || 'Maharashtra (27)';
+    var badge = document.getElementById('clientModalGstBadge');
+    if (badge) badge.style.display = 'none';
     document.getElementById('clientModal').classList.add('active');
   },
 
@@ -1487,12 +1500,171 @@ var OSFApp = {
     this.showToast("Company profile & settings saved successfully!");
   },
 
-  resetCompanySettingsToDefault: function() {
-    if (!confirm("Are you sure you want to reset all company settings to official OSF defaults?")) return;
-    this.state.company = Object.assign({}, DEFAULT_COMPANY_CONFIG);
-    this.saveState();
-    this.populateCompanySettings();
-    this.showToast("Company profile & settings reset to official defaults!");
+  fetchGstDetails: async function(target) {
+    target = target || 'billed';
+    var isBilled = target === 'billed';
+    var isShip = target === 'ship';
+    var isClientModal = target === 'clientModal';
+
+    var gstinInputId = isBilled ? 'billToGstin' : (isShip ? 'shipToGstin' : 'clientFormGstin');
+    var companyInputId = isBilled ? 'billToCompany' : (isShip ? 'shipToCompany' : 'clientFormCompany');
+    var addressInputId = isBilled ? 'billToAddress' : (isShip ? 'shipToAddress' : 'clientFormAddress');
+    var stateSelectId = isClientModal ? 'clientFormState' : 'invPlaceOfSupply';
+    var badgeId = isBilled ? 'billToGstBadge' : (isShip ? 'shipToGstBadge' : 'clientModalGstBadge');
+
+    var gstinInput = document.getElementById(gstinInputId);
+    if (!gstinInput) return;
+
+    var gstin = (gstinInput.value || '').trim().toUpperCase();
+    gstinInput.value = gstin;
+
+    if (!gstin) {
+      this.showToast("Please enter a 15-digit GSTIN number", "error");
+      return;
+    }
+
+    if (gstin.length < 15) {
+      this.showToast("GSTIN must be 15 characters (e.g. 27ABCDE1234F1Z5)", "error");
+      return;
+    }
+
+    var badge = document.getElementById(badgeId);
+    var setBadge = function(text, color) {
+      if (badge) {
+        badge.textContent = text;
+        badge.style.display = 'inline-block';
+        badge.style.color = color || 'var(--primary)';
+      }
+    };
+
+    // 1. Identify State & Auto-Select
+    var stateCode = gstin.substring(0, 2);
+    var matchedState = INDIAN_STATES.find(function(s) { return s.code === stateCode; });
+    var stateElem = document.getElementById(stateSelectId);
+    if (matchedState && stateElem) {
+      stateElem.value = matchedState.name;
+      if (isBilled && this.state.currentInvoice) {
+        this.state.currentInvoice.placeOfSupply = matchedState.name;
+        this.state.currentInvoice.billedTo.state = matchedState.name;
+        this.calculateTotals();
+      }
+    }
+
+    // 2. Check Saved Clients Directory First
+    var localMatch = (this.state.clients || []).find(function(c) {
+      return (c.gstin || '').trim().toUpperCase() === gstin;
+    });
+
+    if (localMatch) {
+      var compElem = document.getElementById(companyInputId);
+      var addrElem = document.getElementById(addressInputId);
+      if (compElem && localMatch.company) compElem.value = localMatch.company;
+      if (addrElem && localMatch.address) addrElem.value = localMatch.address;
+      if (localMatch.state && stateElem) stateElem.value = localMatch.state;
+
+      if (isBilled && this.state.currentInvoice) {
+        this.state.currentInvoice.billedTo.company = localMatch.company;
+        this.state.currentInvoice.billedTo.address = localMatch.address;
+        this.state.currentInvoice.billedTo.gstin = gstin;
+        this.state.currentInvoice.billedTo.state = localMatch.state || (matchedState ? matchedState.name : "Maharashtra (27)");
+        this.saveState();
+      } else if (isShip && this.state.currentInvoice) {
+        this.state.currentInvoice.shippedTo.company = localMatch.company;
+        this.state.currentInvoice.shippedTo.address = localMatch.address;
+        this.state.currentInvoice.shippedTo.gstin = gstin;
+        this.saveState();
+      }
+
+      setBadge("Saved Directory ✓", "#16a34a");
+      this.showToast("Loaded: " + localMatch.company + " (Saved Client) ✅");
+      return;
+    }
+
+    // 3. Live Online GSTIN Lookup
+    setBadge("Checking Online...", "#0284c7");
+    var btn = null;
+    if (window.event && window.event.target) {
+      btn = window.event.target.closest('button');
+    }
+    var originalBtnHtml = btn ? btn.innerHTML : '';
+    if (btn) btn.innerHTML = '<span>⏳ Checking...</span>';
+
+    try {
+      var companyName = "";
+      var fullAddress = "";
+      var status = "Active";
+      var fetched = false;
+
+      var endpoints = [
+        "https://api.incometax.gov.in/tpi/v1/gstin/" + encodeURIComponent(gstin),
+        "https://gstincheck.onrender.com/api/gst/" + encodeURIComponent(gstin)
+      ];
+
+      for (var i = 0; i < endpoints.length; i++) {
+        try {
+          var controller = new AbortController();
+          var timeoutId = setTimeout(function() { controller.abort(); }, 3500);
+          var res = await fetch(endpoints[i], { signal: controller.signal, headers: { 'Accept': 'application/json' } });
+          clearTimeout(timeoutId);
+          if (res.ok) {
+            var data = await res.json();
+            var d = data.data || data;
+            if (d && (d.tradeNam || d.lgnm || d.legal_name || d.trade_name || d.company_name || d.name)) {
+              companyName = d.tradeNam || d.trade_name || d.lgnm || d.legal_name || d.company_name || d.name || "";
+              status = d.sts || d.status || "Active";
+
+              if (d.pradr && d.pradr.addr) {
+                var a = d.pradr.addr;
+                var parts = [a.bno, a.bnm, a.st, a.loc, a.dst, a.stcd, a.pn].filter(Boolean);
+                fullAddress = parts.join(", ");
+              } else if (d.address) {
+                fullAddress = typeof d.address === 'string' ? d.address : Object.values(d.address).filter(Boolean).join(", ");
+              } else if (d.full_address) {
+                fullAddress = d.full_address;
+              }
+
+              if (companyName) {
+                fetched = true;
+                break;
+              }
+            }
+          }
+        } catch(e) {}
+      }
+
+      if (fetched && companyName) {
+        var compElem = document.getElementById(companyInputId);
+        var addrElem = document.getElementById(addressInputId);
+        if (compElem) compElem.value = companyName;
+        if (addrElem && fullAddress) addrElem.value = fullAddress;
+
+        if (isBilled && this.state.currentInvoice) {
+          this.state.currentInvoice.billedTo.company = companyName;
+          if (fullAddress) this.state.currentInvoice.billedTo.address = fullAddress;
+          this.state.currentInvoice.billedTo.gstin = gstin;
+          if (matchedState) this.state.currentInvoice.billedTo.state = matchedState.name;
+          this.saveState();
+        } else if (isShip && this.state.currentInvoice) {
+          this.state.currentInvoice.shippedTo.company = companyName;
+          if (fullAddress) this.state.currentInvoice.shippedTo.address = fullAddress;
+          this.state.currentInvoice.shippedTo.gstin = gstin;
+          this.saveState();
+        }
+
+        setBadge("✓ " + status, "#16a34a");
+        this.showToast("GST Verified: " + companyName + " ✅");
+      } else {
+        var stateMsg = matchedState ? ("State: " + matchedState.name) : "State Code: " + stateCode;
+        setBadge(stateMsg, "#0284c7");
+        this.showToast("State detected: " + (matchedState ? matchedState.name : stateCode) + " ✅ Enter Company Name & Address.");
+      }
+    } catch(err) {
+      var stateMsg = matchedState ? ("State: " + matchedState.name) : stateCode;
+      setBadge(stateMsg, "#64748b");
+      this.showToast("State code auto-detected: " + stateMsg);
+    } finally {
+      if (btn) btn.innerHTML = originalBtnHtml;
+    }
   },
 
   downloadBackupJSON: function() {

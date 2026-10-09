@@ -32,6 +32,7 @@
     <nav class="header-nav">
       <button type="button" class="nav-btn active" data-tab="invoiceBuilder">📝 Create Invoice</button>
       <button type="button" class="nav-btn" data-tab="invoiceHistory">📋 Invoices History</button>
+      <button type="button" class="nav-btn" data-tab="salarySlip">💼 Salary Slip</button>
       <button type="button" class="nav-btn" data-tab="clientsMaster">👥 Client Master</button>
       <button type="button" class="nav-btn" data-tab="productsMaster">📦 Items & Rates</button>
       <button type="button" class="nav-btn" data-tab="settings">⚙️ Settings & Backup</button>
@@ -330,6 +331,270 @@
       </div>
     </section>
 
+        <!-- ================= VIEW 2.5: SALARY SLIP GENERATOR ================= -->
+    <section id="salarySlipView" class="view-section">
+      <!-- Top Action Bar -->
+      <div class="card" style="margin-bottom: 16px; padding: 14px 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <span style="font-size: 1.15rem; font-weight: 700; color: var(--primary-dark);">💼 Salary Slip & Payslip Generator</span>
+            <span style="font-size: 0.85rem; color: var(--text-muted); margin-left: 10px;">OSF Industrial Staff & Labour Payroll</span>
+          </div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-outline" onclick="OSFApp.createNewSalarySlip()">🔄 Reset / New Slip</button>
+            <button type="button" class="btn btn-primary" onclick="OSFApp.openPrintSalarySlip()">🖨️ Preview & Print Payslip</button>
+            <button type="button" class="btn btn-success" onclick="OSFApp.saveCurrentSalarySlip()">💾 Save Salary Slip</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Salary Sub Navigation -->
+      <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+        <button type="button" class="btn btn-primary" id="btnSubSalaryGen" onclick="OSFApp.switchSalarySubTab('generator')" style="padding: 8px 18px; font-weight: 700;">📝 Generate Payslip</button>
+        <button type="button" class="btn btn-outline" id="btnSubSalaryHistory" onclick="OSFApp.switchSalarySubTab('history')" style="padding: 8px 18px; font-weight: 700;">📋 Saved Payslips History</button>
+        <button type="button" class="btn btn-outline" id="btnSubSalaryEmployees" onclick="OSFApp.switchSalarySubTab('employees')" style="padding: 8px 18px; font-weight: 700;">👷 Employee Master</button>
+      </div>
+
+      <!-- SUB-VIEW 1: GENERATE PAYSLIP FORM -->
+      <div id="salaryGeneratorSubView">
+        <!-- Employee & Period Selection -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">👤 Employee & Salary Period Details</div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin: 0;">SELECT SAVED EMPLOYEE:</label>
+              <select id="salaryEmpSelect" class="form-control" style="width: 280px; font-weight: 700;" onchange="OSFApp.onEmployeeSelectForSalary(this.value)"></select>
+              <button type="button" class="btn btn-outline btn-sm" onclick="OSFApp.openEmployeeModal()" title="Add New Employee">➕ Add Employee</button>
+            </div>
+          </div>
+          
+          <div class="grid-4" style="margin-bottom: 12px;">
+            <div class="form-group">
+              <label>Salary Month & Year *</label>
+              <input type="text" id="salPayMonth" class="form-control" placeholder="e.g. October 2026" value="October 2026" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+            <div class="form-group">
+              <label>Pay / Disbursement Date</label>
+              <input type="date" id="salPayDate" class="form-control" onchange="OSFApp.calculateSalaryTotals()" />
+            </div>
+            <div class="form-group">
+              <label>Employee Code / ID *</label>
+              <input type="text" id="salEmpCode" class="form-control" placeholder="OSF-EMP-001" style="font-family: var(--font-mono); font-weight: 700;" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+            <div class="form-group">
+              <label>Employee Full Name *</label>
+              <input type="text" id="salEmpName" class="form-control" placeholder="Employee Name" style="font-weight: 700;" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+          </div>
+
+          <div class="grid-4" style="margin-bottom: 12px;">
+            <div class="form-group">
+              <label>Designation / Job Role</label>
+              <input type="text" id="salDesignation" class="form-control" placeholder="Senior Fabricator / Welder" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+            <div class="form-group">
+              <label>Department</label>
+              <input type="text" id="salDepartment" class="form-control" placeholder="Fabrication Works" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+            <div class="form-group">
+              <label>Date of Joining (DOJ)</label>
+              <input type="text" id="salDoj" class="form-control" placeholder="01/01/2024" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+            <div class="form-group">
+              <label>PAN Number</label>
+              <input type="text" id="salPan" class="form-control" placeholder="ABCDE1234F" style="font-family: var(--font-mono); text-transform: uppercase;" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+          </div>
+
+          <div class="grid-4">
+            <div class="form-group">
+              <label>Bank Name</label>
+              <input type="text" id="salBankName" class="form-control" placeholder="State Bank of India" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+            <div class="form-group">
+              <label>Bank Account Number</label>
+              <input type="text" id="salBankAccount" class="form-control" placeholder="Account Number" style="font-family: var(--font-mono);" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+            <div class="form-group">
+              <label>IFSC Code</label>
+              <input type="text" id="salIfsc" class="form-control" placeholder="SBIN0001234" style="font-family: var(--font-mono); text-transform: uppercase;" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+            <div class="form-group">
+              <label>UAN / PF No & ESIC No</label>
+              <input type="text" id="salUan" class="form-control" placeholder="UAN: 100928374 / ESIC: 3100928" style="font-family: var(--font-mono);" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Attendance & Overtime -->
+        <div class="card" style="background: #f8fafc;">
+          <div class="card-title" style="margin-bottom: 12px;">📅 Attendance & Working Days</div>
+          <div class="grid-4">
+            <div class="form-group">
+              <label>Total Month Days</label>
+              <input type="number" id="salTotalDays" class="form-control" value="30" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+            <div class="form-group">
+              <label>Days Worked / Present *</label>
+              <input type="number" id="salPresentDays" class="form-control" value="30" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+            <div class="form-group">
+              <label>Absent / Unpaid Leave (LOP)</label>
+              <input type="number" id="salAbsentDays" class="form-control" value="0" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+            <div class="form-group">
+              <label>Overtime Hours</label>
+              <input type="number" id="salOtHours" class="form-control" value="0" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Earnings vs Deductions Grid -->
+        <div class="grid-2">
+          <!-- Earnings Column -->
+          <div class="card" style="border-top: 4px solid #10b981;">
+            <div class="card-header" style="padding-bottom: 10px; margin-bottom: 14px;">
+              <div class="card-title" style="color: #065f46;">💰 EARNINGS (कमाइयां)</div>
+            </div>
+            <div class="form-group">
+              <label>Basic Salary (₹) *</label>
+              <input type="number" step="0.01" id="salBasic" class="form-control" style="font-weight: 700; font-size: 1.05rem;" value="20000" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+            <div class="form-group">
+              <label>House Rent Allowance - HRA (₹)</label>
+              <input type="number" step="0.01" id="salHra" class="form-control" value="4000" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+            <div class="form-group">
+              <label>Conveyance / Travel Allowance (₹)</label>
+              <input type="number" step="0.01" id="salConveyance" class="form-control" value="1500" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+            <div class="form-group">
+              <label>Overtime (OT) Pay (₹)</label>
+              <input type="number" step="0.01" id="salOtAmount" class="form-control" value="0" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+            <div class="form-group">
+              <label>Special / Site Allowance (₹)</label>
+              <input type="number" step="0.01" id="salSpecial" class="form-control" value="0" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+            <div class="form-group">
+              <label>Bonus / Incentives (₹)</label>
+              <input type="number" step="0.01" id="salBonus" class="form-control" value="0" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+            <hr style="margin: 14px 0; border: none; border-top: 1px dashed #cbd5e1;" />
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-weight: 800; font-size: 1rem; color: #065f46;">GROSS EARNINGS:</span>
+              <span id="dispGrossEarnings" style="font-weight: 900; font-size: 1.2rem; color: #059669; font-family: var(--font-mono);">₹ 25,500.00</span>
+            </div>
+          </div>
+
+          <!-- Deductions Column -->
+          <div class="card" style="border-top: 4px solid #ef4444;">
+            <div class="card-header" style="padding-bottom: 10px; margin-bottom: 14px;">
+              <div class="card-title" style="color: #991b1b;">📉 DEDUCTIONS (कटौतियां)</div>
+            </div>
+            <div class="form-group">
+              <label>Provident Fund - EPF (₹)</label>
+              <input type="number" step="0.01" id="salPf" class="form-control" value="0" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+            <div class="form-group">
+              <label>ESIC (₹)</label>
+              <input type="number" step="0.01" id="salEsic" class="form-control" value="0" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+            <div class="form-group">
+              <label>Professional Tax - PT (₹)</label>
+              <input type="number" step="0.01" id="salPt" class="form-control" value="200" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+            <div class="form-group">
+              <label>Salary Advance / Loan Recovery (₹)</label>
+              <input type="number" step="0.01" id="salAdvance" class="form-control" value="0" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+            <div class="form-group">
+              <label>TDS / Income Tax (₹)</label>
+              <input type="number" step="0.01" id="salTds" class="form-control" value="0" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+            <div class="form-group">
+              <label>Other Deductions / Penalties (₹)</label>
+              <input type="number" step="0.01" id="salOtherDeductions" class="form-control" value="0" oninput="OSFApp.calculateSalaryTotals()" />
+            </div>
+            <hr style="margin: 14px 0; border: none; border-top: 1px dashed #cbd5e1;" />
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-weight: 800; font-size: 1rem; color: #991b1b;">TOTAL DEDUCTIONS:</span>
+              <span id="dispTotalDeductions" style="font-weight: 900; font-size: 1.2rem; color: #dc2626; font-family: var(--font-mono);">₹ 200.00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Net Take Home Banner -->
+        <div class="card" style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); color: white; border: none; padding: 20px 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div>
+              <div style="font-size: 0.85rem; color: #93c5fd; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Net Take-Home Salary (इन-हैंड वेतन)</div>
+              <div id="dispNetSalaryWords" style="font-size: 1.05rem; font-weight: 700; color: #f8fafc; margin-top: 4px;">Rupees Twenty-Five Thousand Three Hundred Only</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 0.8rem; color: #93c5fd; font-weight: 600;">NET PAYABLE AMOUNT</div>
+              <div id="dispNetSalaryAmount" style="font-size: 2.2rem; font-weight: 900; color: #34d399; font-family: var(--font-mono);">₹ 25,300.00</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-VIEW 2: SALARY SLIPS HISTORY -->
+      <div id="salaryHistorySubView" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📋 Generated Salary Slips History</div>
+            <input type="text" id="salarySearchInput" class="form-control" style="width: 280px;" placeholder="🔍 Search by Employee or Month..." oninput="OSFApp.renderSalarySlipsList()" />
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th>Date</th>
+                  <th>Emp Code</th>
+                  <th>Employee Name</th>
+                  <th>Designation</th>
+                  <th style="text-align: right;">Gross (₹)</th>
+                  <th style="text-align: right;">Deductions (₹)</th>
+                  <th style="text-align: right;">Net Pay (₹)</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="salarySlipsHistoryTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-VIEW 3: EMPLOYEES MASTER -->
+      <div id="salaryEmployeesSubView" style="display: none;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">👷 OSF Employee Database</div>
+            <button type="button" class="btn btn-primary" onclick="OSFApp.openEmployeeModal()">➕ Add New Employee</button>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Emp Code</th>
+                  <th>Employee Name</th>
+                  <th>Designation</th>
+                  <th>Department</th>
+                  <th>Bank & A/C</th>
+                  <th style="text-align: right;">Base Salary (₹)</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="employeesMasterTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
     <!-- ================= VIEW 3: CLIENTS MASTER ================= -->
     <section id="clientsMasterView" class="view-section">
       <div class="card">
@@ -515,6 +780,87 @@
       </div>
     </section>
 
+  </div>
+
+    <!-- ================= EMPLOYEE MODAL ================= -->
+  <div id="employeeModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3 id="empModalTitle" style="font-size: 1.1rem; font-weight: 700;">Add / Edit Employee</h3>
+        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('employeeModal').classList.remove('active')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="empEditId" />
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Employee Code *</label>
+            <input type="text" id="empFormCode" class="form-control" placeholder="OSF-EMP-001" style="font-family: monospace; font-weight: 700;" />
+          </div>
+          <div class="form-group">
+            <label>Employee Full Name *</label>
+            <input type="text" id="empFormName" class="form-control" placeholder="e.g. Manish Vishwakarma" style="font-weight: 700;" />
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Designation / Role</label>
+            <input type="text" id="empFormDesignation" class="form-control" placeholder="e.g. Senior Fabricator & Welder" />
+          </div>
+          <div class="form-group">
+            <label>Department</label>
+            <input type="text" id="empFormDepartment" class="form-control" placeholder="Fabrication Works" value="Fabrication Works" />
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Date of Joining (DOJ)</label>
+            <input type="text" id="empFormDoj" class="form-control" placeholder="01/01/2024" />
+          </div>
+          <div class="form-group">
+            <label>PAN Number</label>
+            <input type="text" id="empFormPan" class="form-control" placeholder="ABCDE1234F" style="text-transform: uppercase; font-family: monospace;" />
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Bank Name</label>
+            <input type="text" id="empFormBankName" class="form-control" placeholder="State Bank of India" />
+          </div>
+          <div class="form-group">
+            <label>Bank Account No.</label>
+            <input type="text" id="empFormAccount" class="form-control" placeholder="Bank Account Number" style="font-family: monospace;" />
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>IFSC Code</label>
+            <input type="text" id="empFormIfsc" class="form-control" placeholder="SBIN0001234" style="text-transform: uppercase; font-family: monospace;" />
+          </div>
+          <div class="form-group">
+            <label>UAN / PF / ESIC</label>
+            <input type="text" id="empFormUan" class="form-control" placeholder="UAN / ESIC No" />
+          </div>
+        </div>
+        <div class="grid-3">
+          <div class="form-group">
+            <label>Basic Salary (₹)</label>
+            <input type="number" step="0.01" id="empFormBasic" class="form-control" value="20000" />
+          </div>
+          <div class="form-group">
+            <label>HRA (₹)</label>
+            <input type="number" step="0.01" id="empFormHra" class="form-control" value="4000" />
+          </div>
+          <div class="form-group">
+            <label>Conveyance (₹)</label>
+            <input type="number" step="0.01" id="empFormConveyance" class="form-control" value="1500" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="document.getElementById('employeeModal').classList.remove('active')">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="OSFApp.saveEmployeeFromModal()">💾 Save Employee</button>
+      </div>
+    </div>
   </div>
 
   <!-- ================= CLIENT MODAL ================= -->

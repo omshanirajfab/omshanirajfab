@@ -66,7 +66,10 @@ var OSFApp = {
     CLIENTS: "osf_clients_db",
     PRODUCTS: "osf_products_db",
     INVOICES: "osf_invoices_history",
-    ACTIVE_INV: "osf_active_draft"
+    ACTIVE_INV: "osf_active_draft",
+    EMPLOYEES: "osf_employees_db",
+    SALARY_SLIPS: "osf_salary_slips_db",
+    ACTIVE_PAYSLIP: "osf_active_payslip"
   },
 
   state: {
@@ -75,6 +78,10 @@ var OSFApp = {
     products: [],
     invoices: [],
     currentInvoice: null,
+    employees: [],
+    salarySlips: [],
+    currentPayslip: null,
+    activeSalarySubTab: 'generator',
     activeTab: 'invoiceBuilder',
     printCopies: 'original_duplicate'
   },
@@ -120,6 +127,15 @@ var OSFApp = {
 
       var savedDraft = localStorage.getItem(this.STORAGE_KEYS.ACTIVE_INV);
       this.state.currentInvoice = savedDraft ? JSON.parse(savedDraft) : null;
+
+      var savedEmps = localStorage.getItem(this.STORAGE_KEYS.EMPLOYEES);
+      this.state.employees = savedEmps ? JSON.parse(savedEmps) : (typeof DEFAULT_EMPLOYEES !== 'undefined' ? DEFAULT_EMPLOYEES.slice() : []);
+
+      var savedSlips = localStorage.getItem(this.STORAGE_KEYS.SALARY_SLIPS);
+      this.state.salarySlips = savedSlips ? JSON.parse(savedSlips) : [];
+
+      var savedPayDraft = localStorage.getItem(this.STORAGE_KEYS.ACTIVE_PAYSLIP);
+      this.state.currentPayslip = savedPayDraft ? JSON.parse(savedPayDraft) : null;
     } catch(e) {
       console.error("Error loading state from localStorage", e);
       this.state.company = Object.assign({}, DEFAULT_COMPANY_CONFIG);
@@ -165,6 +181,7 @@ var OSFApp = {
     });
 
     if (tabName === 'invoiceHistory') this.renderInvoicesList();
+    if (tabName === 'salarySlip') this.initSalarySlip();
     if (tabName === 'clientsMaster') this.renderClientsList();
     if (tabName === 'productsMaster') this.renderProductsList();
     if (tabName === 'settings') this.populateCompanySettings();
@@ -1733,6 +1750,439 @@ var OSFApp = {
     };
     reader.readAsText(file);
   }
+,
+
+  /* ==========================================================================
+     SALARY SLIP & PAYROLL MANAGEMENT ENGINE
+     ========================================================================== */
+
+  initSalarySlip: function() {
+    this.renderEmployeesDropdown();
+    this.renderEmployeesList();
+    this.renderSalarySlipsList();
+
+    var dateInput = document.getElementById("salPayDate");
+    if (dateInput && !dateInput.value) {
+      dateInput.value = new Date().toISOString().split("T")[0];
+    }
+    
+    var monthInput = document.getElementById("salPayMonth");
+    if (monthInput && !monthInput.value) {
+      var d = new Date();
+      var monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      monthInput.value = monthNames[d.getMonth()] + " " + d.getFullYear();
+    }
+
+    this.calculateSalaryTotals();
+  },
+
+  switchSalarySubTab: function(subTab) {
+    this.state.activeSalarySubTab = subTab;
+    var btnGen = document.getElementById("btnSubSalaryGen");
+    var btnHist = document.getElementById("btnSubSalaryHistory");
+    var btnEmp = document.getElementById("btnSubSalaryEmployees");
+
+    var viewGen = document.getElementById("salaryGeneratorSubView");
+    var viewHist = document.getElementById("salaryHistorySubView");
+    var viewEmp = document.getElementById("salaryEmployeesSubView");
+
+    if (btnGen) btnGen.className = subTab === "generator" ? "btn btn-primary" : "btn btn-outline";
+    if (btnHist) btnHist.className = subTab === "history" ? "btn btn-primary" : "btn btn-outline";
+    if (btnEmp) btnEmp.className = subTab === "employees" ? "btn btn-primary" : "btn btn-outline";
+
+    if (viewGen) viewGen.style.display = subTab === "generator" ? "block" : "none";
+    if (viewHist) viewHist.style.display = subTab === "history" ? "block" : "none";
+    if (viewEmp) viewEmp.style.display = subTab === "employees" ? "block" : "none";
+
+    if (subTab === "history") this.renderSalarySlipsList();
+    if (subTab === "employees") this.renderEmployeesList();
+  },
+
+  renderEmployeesDropdown: function() {
+    var sel = document.getElementById("salaryEmpSelect");
+    if (!sel) return;
+    sel.innerHTML = "<option value=''>-- Choose Employee --</option>";
+    (this.state.employees || []).forEach(function(e) {
+      var opt = document.createElement("option");
+      opt.value = e.id;
+      opt.textContent = (e.code ? e.code + " - " : "") + e.name + (e.designation ? " (" + e.designation + ")" : "");
+      sel.appendChild(opt);
+    });
+  },
+
+  onEmployeeSelectForSalary: function(empId) {
+    if (!empId) return;
+    var emp = (this.state.employees || []).find(function(e) { return e.id === empId; });
+    if (!emp) return;
+
+    if (document.getElementById("salEmpCode")) document.getElementById("salEmpCode").value = emp.code || "";
+    if (document.getElementById("salEmpName")) document.getElementById("salEmpName").value = emp.name || "";
+    if (document.getElementById("salDesignation")) document.getElementById("salDesignation").value = emp.designation || "";
+    if (document.getElementById("salDepartment")) document.getElementById("salDepartment").value = emp.department || "Fabrication Works";
+    if (document.getElementById("salDoj")) document.getElementById("salDoj").value = emp.doj || "";
+    if (document.getElementById("salPan")) document.getElementById("salPan").value = emp.pan || "";
+    if (document.getElementById("salBankName")) document.getElementById("salBankName").value = emp.bankName || "";
+    if (document.getElementById("salBankAccount")) document.getElementById("salBankAccount").value = emp.accountNo || "";
+    if (document.getElementById("salIfsc")) document.getElementById("salIfsc").value = emp.ifsc || "";
+    if (document.getElementById("salUan")) document.getElementById("salUan").value = emp.uan || "";
+    if (document.getElementById("salBasic")) document.getElementById("salBasic").value = emp.basic || 0;
+    if (document.getElementById("salHra")) document.getElementById("salHra").value = emp.hra || 0;
+    if (document.getElementById("salConveyance")) document.getElementById("salConveyance").value = emp.conveyance || 0;
+
+    this.calculateSalaryTotals();
+    this.showToast("Loaded profile for " + emp.name);
+  },
+
+  calculateSalaryTotals: function() {
+    var basic = parseFloat(document.getElementById("salBasic") ? document.getElementById("salBasic").value : 0) || 0;
+    var hra = parseFloat(document.getElementById("salHra") ? document.getElementById("salHra").value : 0) || 0;
+    var conveyance = parseFloat(document.getElementById("salConveyance") ? document.getElementById("salConveyance").value : 0) || 0;
+    var otAmount = parseFloat(document.getElementById("salOtAmount") ? document.getElementById("salOtAmount").value : 0) || 0;
+    var special = parseFloat(document.getElementById("salSpecial") ? document.getElementById("salSpecial").value : 0) || 0;
+    var bonus = parseFloat(document.getElementById("salBonus") ? document.getElementById("salBonus").value : 0) || 0;
+
+    var pf = parseFloat(document.getElementById("salPf") ? document.getElementById("salPf").value : 0) || 0;
+    var esic = parseFloat(document.getElementById("salEsic") ? document.getElementById("salEsic").value : 0) || 0;
+    var pt = parseFloat(document.getElementById("salPt") ? document.getElementById("salPt").value : 0) || 0;
+    var advance = parseFloat(document.getElementById("salAdvance") ? document.getElementById("salAdvance").value : 0) || 0;
+    var tds = parseFloat(document.getElementById("salTds") ? document.getElementById("salTds").value : 0) || 0;
+    var other = parseFloat(document.getElementById("salOtherDeductions") ? document.getElementById("salOtherDeductions").value : 0) || 0;
+
+    var gross = basic + hra + conveyance + otAmount + special + bonus;
+    var deductions = pf + esic + pt + advance + tds + other;
+    var netPay = Math.max(0, gross - deductions);
+
+    var formatNum = function(n) {
+      return n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
+    if (document.getElementById("dispGrossEarnings")) document.getElementById("dispGrossEarnings").innerText = "₹ " + formatNum(gross);
+    if (document.getElementById("dispTotalDeductions")) document.getElementById("dispTotalDeductions").innerText = "₹ " + formatNum(deductions);
+    if (document.getElementById("dispNetSalaryAmount")) document.getElementById("dispNetSalaryAmount").innerText = "₹ " + formatNum(netPay);
+    
+    var words = numberToIndianWords(netPay);
+    if (document.getElementById("dispNetSalaryWords")) document.getElementById("dispNetSalaryWords").innerText = words;
+
+    // Cache active payslip draft
+    var draft = {
+      id: (this.state.currentPayslip && this.state.currentPayslip.id) || ("SLIP_" + Date.now()),
+      payMonth: document.getElementById("salPayMonth") ? document.getElementById("salPayMonth").value : "",
+      payDate: document.getElementById("salPayDate") ? document.getElementById("salPayDate").value : "",
+      empCode: document.getElementById("salEmpCode") ? document.getElementById("salEmpCode").value : "",
+      empName: document.getElementById("salEmpName") ? document.getElementById("salEmpName").value : "",
+      designation: document.getElementById("salDesignation") ? document.getElementById("salDesignation").value : "",
+      department: document.getElementById("salDepartment") ? document.getElementById("salDepartment").value : "",
+      doj: document.getElementById("salDoj") ? document.getElementById("salDoj").value : "",
+      pan: document.getElementById("salPan") ? document.getElementById("salPan").value : "",
+      bankName: document.getElementById("salBankName") ? document.getElementById("salBankName").value : "",
+      bankAccount: document.getElementById("salBankAccount") ? document.getElementById("salBankAccount").value : "",
+      ifsc: document.getElementById("salIfsc") ? document.getElementById("salIfsc").value : "",
+      uan: document.getElementById("salUan") ? document.getElementById("salUan").value : "",
+      totalDays: document.getElementById("salTotalDays") ? document.getElementById("salTotalDays").value : 30,
+      presentDays: document.getElementById("salPresentDays") ? document.getElementById("salPresentDays").value : 30,
+      absentDays: document.getElementById("salAbsentDays") ? document.getElementById("salAbsentDays").value : 0,
+      otHours: document.getElementById("salOtHours") ? document.getElementById("salOtHours").value : 0,
+      basic: basic,
+      hra: hra,
+      conveyance: conveyance,
+      otAmount: otAmount,
+      specialAllowance: special,
+      bonus: bonus,
+      pf: pf,
+      esic: esic,
+      pt: pt,
+      advance: advance,
+      tds: tds,
+      otherDeductions: other,
+      grossEarnings: gross,
+      totalDeductions: deductions,
+      netPay: netPay,
+      netWords: words
+    };
+
+    this.state.currentPayslip = draft;
+    localStorage.setItem(this.STORAGE_KEYS.ACTIVE_PAYSLIP, JSON.stringify(draft));
+  },
+
+  saveCurrentSalarySlip: function() {
+    this.calculateSalaryTotals();
+    var slip = this.state.currentPayslip;
+    if (!slip || !slip.empName) {
+      this.showToast("Please enter Employee Name", "error");
+      return;
+    }
+
+    var existingIdx = (this.state.salarySlips || []).findIndex(function(s) { return s.id === slip.id; });
+    if (existingIdx !== -1) {
+      this.state.salarySlips[existingIdx] = slip;
+    } else {
+      this.state.salarySlips.unshift(slip);
+    }
+
+    localStorage.setItem(this.STORAGE_KEYS.SALARY_SLIPS, JSON.stringify(this.state.salarySlips));
+    this.renderSalarySlipsList();
+    this.showToast("Salary Slip saved successfully for " + slip.empName + "!");
+  },
+
+  createNewSalarySlip: function() {
+    this.state.currentPayslip = null;
+    localStorage.removeItem(this.STORAGE_KEYS.ACTIVE_PAYSLIP);
+
+    if (document.getElementById("salaryEmpSelect")) document.getElementById("salaryEmpSelect").value = "";
+    if (document.getElementById("salEmpCode")) document.getElementById("salEmpCode").value = "OSF-EMP-" + (Math.floor(Math.random() * 899) + 100);
+    if (document.getElementById("salEmpName")) document.getElementById("salEmpName").value = "";
+    if (document.getElementById("salDesignation")) document.getElementById("salDesignation").value = "";
+    if (document.getElementById("salDepartment")) document.getElementById("salDepartment").value = "Fabrication Works";
+    if (document.getElementById("salDoj")) document.getElementById("salDoj").value = "";
+    if (document.getElementById("salPan")) document.getElementById("salPan").value = "";
+    if (document.getElementById("salBankName")) document.getElementById("salBankName").value = "State Bank of India";
+    if (document.getElementById("salBankAccount")) document.getElementById("salBankAccount").value = "";
+    if (document.getElementById("salIfsc")) document.getElementById("salIfsc").value = "";
+    if (document.getElementById("salUan")) document.getElementById("salUan").value = "";
+    if (document.getElementById("salTotalDays")) document.getElementById("salTotalDays").value = 30;
+    if (document.getElementById("salPresentDays")) document.getElementById("salPresentDays").value = 30;
+    if (document.getElementById("salAbsentDays")) document.getElementById("salAbsentDays").value = 0;
+    if (document.getElementById("salOtHours")) document.getElementById("salOtHours").value = 0;
+    if (document.getElementById("salBasic")) document.getElementById("salBasic").value = 20000;
+    if (document.getElementById("salHra")) document.getElementById("salHra").value = 4000;
+    if (document.getElementById("salConveyance")) document.getElementById("salConveyance").value = 1500;
+    if (document.getElementById("salOtAmount")) document.getElementById("salOtAmount").value = 0;
+    if (document.getElementById("salSpecial")) document.getElementById("salSpecial").value = 0;
+    if (document.getElementById("salBonus")) document.getElementById("salBonus").value = 0;
+    if (document.getElementById("salPf")) document.getElementById("salPf").value = 0;
+    if (document.getElementById("salEsic")) document.getElementById("salEsic").value = 0;
+    if (document.getElementById("salPt")) document.getElementById("salPt").value = 200;
+    if (document.getElementById("salAdvance")) document.getElementById("salAdvance").value = 0;
+    if (document.getElementById("salTds")) document.getElementById("salTds").value = 0;
+    if (document.getElementById("salOtherDeductions")) document.getElementById("salOtherDeductions").value = 0;
+
+    this.calculateSalaryTotals();
+    this.showToast("Form reset to new salary slip");
+  },
+
+  renderSalarySlipsList: function() {
+    var tbody = document.getElementById("salarySlipsHistoryTbody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    var q = (document.getElementById("salarySearchInput") ? document.getElementById("salarySearchInput").value : "").toLowerCase().trim();
+    var list = this.state.salarySlips || [];
+
+    if (q) {
+      list = list.filter(function(s) {
+        return (s.empName && s.empName.toLowerCase().includes(q)) ||
+               (s.empCode && s.empCode.toLowerCase().includes(q)) ||
+               (s.payMonth && s.payMonth.toLowerCase().includes(q));
+      });
+    }
+
+    if (list.length === 0) {
+      tbody.innerHTML = "<tr><td colspan='9' style='text-align:center;color:var(--text-muted);padding:24px;'>No saved salary slips found. Generate and save one above!</td></tr>";
+      return;
+    }
+
+    var self = this;
+    list.forEach(function(s) {
+      var tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td style="font-weight: 700; color: var(--primary);">${s.payMonth || "N/A"}</td>
+        <td style="font-family: var(--font-mono); font-size: 0.85rem;">${s.payDate || ""}</td>
+        <td style="font-family: var(--font-mono); font-weight: 700;">${s.empCode || ""}</td>
+        <td style="font-weight: 700;">${s.empName || ""}</td>
+        <td style="font-size: 0.85rem; color: var(--text-muted);">${s.designation || ""}</td>
+        <td style="text-align: right; font-family: var(--font-mono);">₹ ${(s.grossEarnings || 0).toLocaleString("en-IN", {minimumFractionDigits: 2})}</td>
+        <td style="text-align: right; font-family: var(--font-mono); color: #dc2626;">₹ ${(s.totalDeductions || 0).toLocaleString("en-IN", {minimumFractionDigits: 2})}</td>
+        <td style="text-align: right; font-family: var(--font-mono); font-weight: 800; color: #059669;">₹ ${(s.netPay || 0).toLocaleString("en-IN", {minimumFractionDigits: 2})}</td>
+        <td style="text-align: right; white-space: nowrap;">
+          <button type="button" class="btn btn-primary btn-sm" style="padding: 4px 8px; font-size: 0.75rem;" onclick="OSFApp.openPrintSalarySlip('${s.id}')">🖨️ Print</button>
+          <button type="button" class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 0.75rem;" onclick="OSFApp.loadSalarySlipToEdit('${s.id}')">✏️ Edit</button>
+          <button type="button" class="btn btn-danger btn-sm" style="padding: 4px 8px; font-size: 0.75rem;" onclick="OSFApp.deleteSalarySlip('${s.id}')">🗑️</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  },
+
+  deleteSalarySlip: function(slipId) {
+    if (!confirm("Are you sure you want to delete this salary slip record?")) return;
+    this.state.salarySlips = (this.state.salarySlips || []).filter(function(s) { return s.id !== slipId; });
+    localStorage.setItem(this.STORAGE_KEYS.SALARY_SLIPS, JSON.stringify(this.state.salarySlips));
+    this.renderSalarySlipsList();
+    this.showToast("Salary slip deleted");
+  },
+
+  loadSalarySlipToEdit: function(slipId) {
+    var slip = (this.state.salarySlips || []).find(function(s) { return s.id === slipId; });
+    if (!slip) return;
+
+    if (document.getElementById("salPayMonth")) document.getElementById("salPayMonth").value = slip.payMonth || "";
+    if (document.getElementById("salPayDate")) document.getElementById("salPayDate").value = slip.payDate || "";
+    if (document.getElementById("salEmpCode")) document.getElementById("salEmpCode").value = slip.empCode || "";
+    if (document.getElementById("salEmpName")) document.getElementById("salEmpName").value = slip.empName || "";
+    if (document.getElementById("salDesignation")) document.getElementById("salDesignation").value = slip.designation || "";
+    if (document.getElementById("salDepartment")) document.getElementById("salDepartment").value = slip.department || "";
+    if (document.getElementById("salDoj")) document.getElementById("salDoj").value = slip.doj || "";
+    if (document.getElementById("salPan")) document.getElementById("salPan").value = slip.pan || "";
+    if (document.getElementById("salBankName")) document.getElementById("salBankName").value = slip.bankName || "";
+    if (document.getElementById("salBankAccount")) document.getElementById("salBankAccount").value = slip.bankAccount || "";
+    if (document.getElementById("salIfsc")) document.getElementById("salIfsc").value = slip.ifsc || "";
+    if (document.getElementById("salUan")) document.getElementById("salUan").value = slip.uan || "";
+    if (document.getElementById("salTotalDays")) document.getElementById("salTotalDays").value = slip.totalDays || 30;
+    if (document.getElementById("salPresentDays")) document.getElementById("salPresentDays").value = slip.presentDays || 30;
+    if (document.getElementById("salAbsentDays")) document.getElementById("salAbsentDays").value = slip.absentDays || 0;
+    if (document.getElementById("salOtHours")) document.getElementById("salOtHours").value = slip.otHours || 0;
+    if (document.getElementById("salBasic")) document.getElementById("salBasic").value = slip.basic || 0;
+    if (document.getElementById("salHra")) document.getElementById("salHra").value = slip.hra || 0;
+    if (document.getElementById("salConveyance")) document.getElementById("salConveyance").value = slip.conveyance || 0;
+    if (document.getElementById("salOtAmount")) document.getElementById("salOtAmount").value = slip.otAmount || 0;
+    if (document.getElementById("salSpecial")) document.getElementById("salSpecial").value = slip.specialAllowance || 0;
+    if (document.getElementById("salBonus")) document.getElementById("salBonus").value = slip.bonus || 0;
+    if (document.getElementById("salPf")) document.getElementById("salPf").value = slip.pf || 0;
+    if (document.getElementById("salEsic")) document.getElementById("salEsic").value = slip.esic || 0;
+    if (document.getElementById("salPt")) document.getElementById("salPt").value = slip.pt || 0;
+    if (document.getElementById("salAdvance")) document.getElementById("salAdvance").value = slip.advance || 0;
+    if (document.getElementById("salTds")) document.getElementById("salTds").value = slip.tds || 0;
+    if (document.getElementById("salOtherDeductions")) document.getElementById("salOtherDeductions").value = slip.otherDeductions || 0;
+
+    this.state.currentPayslip = slip;
+    this.calculateSalaryTotals();
+    this.switchSalarySubTab("generator");
+    this.showToast("Loaded salary slip for " + slip.empName);
+  },
+
+  openPrintSalarySlip: function(slipId) {
+    if (!slipId) {
+      this.calculateSalaryTotals();
+      slipId = this.state.currentPayslip ? this.state.currentPayslip.id : null;
+    }
+    var printUrl = "payslip_print.html" + (slipId ? "?id=" + encodeURIComponent(slipId) : "") + "&t=" + Date.now();
+    var win = window.open(printUrl, "_blank");
+    if (!win) {
+      alert("Popup was blocked by your browser! Please allow popups to open payslip preview.");
+    }
+  },
+
+  renderEmployeesList: function() {
+    var tbody = document.getElementById("employeesMasterTbody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    var list = this.state.employees || [];
+    if (list.length === 0) {
+      tbody.innerHTML = "<tr><td colspan='7' style='text-align:center;color:var(--text-muted);padding:20px;'>No employees added yet.</td></tr>";
+      return;
+    }
+
+    list.forEach(function(e) {
+      var tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td style="font-family: var(--font-mono); font-weight: 700;">${e.code || ""}</td>
+        <td style="font-weight: 700;">${e.name || ""}</td>
+        <td>${e.designation || ""}</td>
+        <td style="color: var(--text-muted);">${e.department || ""}</td>
+        <td style="font-size: 0.85rem;">${e.bankName || ""}<br/><span style="font-family: var(--font-mono);">${e.accountNo || ""}</span></td>
+        <td style="text-align: right; font-family: var(--font-mono); font-weight: 700;">₹ ${(e.basic || 0).toLocaleString("en-IN", {minimumFractionDigits: 2})}</td>
+        <td style="text-align: right; white-space: nowrap;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="OSFApp.openEmployeeModal('${e.id}')">✏️ Edit</button>
+          <button type="button" class="btn btn-danger btn-sm" onclick="OSFApp.deleteEmployee('${e.id}')">🗑️</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  },
+
+  openEmployeeModal: function(empId) {
+    var modal = document.getElementById("employeeModal");
+    if (!modal) return;
+    modal.classList.add("active");
+
+    if (empId) {
+      var emp = (this.state.employees || []).find(function(e) { return e.id === empId; });
+      if (emp) {
+        document.getElementById("empModalTitle").innerText = "Edit Employee";
+        document.getElementById("empEditId").value = emp.id;
+        document.getElementById("empFormCode").value = emp.code || "";
+        document.getElementById("empFormName").value = emp.name || "";
+        document.getElementById("empFormDesignation").value = emp.designation || "";
+        document.getElementById("empFormDepartment").value = emp.department || "Fabrication Works";
+        document.getElementById("empFormDoj").value = emp.doj || "";
+        document.getElementById("empFormPan").value = emp.pan || "";
+        document.getElementById("empFormBankName").value = emp.bankName || "";
+        document.getElementById("empFormAccount").value = emp.accountNo || "";
+        document.getElementById("empFormIfsc").value = emp.ifsc || "";
+        document.getElementById("empFormUan").value = emp.uan || "";
+        document.getElementById("empFormBasic").value = emp.basic || 20000;
+        document.getElementById("empFormHra").value = emp.hra || 4000;
+        document.getElementById("empFormConveyance").value = emp.conveyance || 1500;
+        return;
+      }
+    }
+
+    document.getElementById("empModalTitle").innerText = "Add New Employee";
+    document.getElementById("empEditId").value = "";
+    document.getElementById("empFormCode").value = "OSF-EMP-" + (Math.floor(Math.random() * 899) + 100);
+    document.getElementById("empFormName").value = "";
+    document.getElementById("empFormDesignation").value = "";
+    document.getElementById("empFormDepartment").value = "Fabrication Works";
+    document.getElementById("empFormDoj").value = "";
+    document.getElementById("empFormPan").value = "";
+    document.getElementById("empFormBankName").value = "State Bank of India";
+    document.getElementById("empFormAccount").value = "";
+    document.getElementById("empFormIfsc").value = "";
+    document.getElementById("empFormUan").value = "";
+    document.getElementById("empFormBasic").value = 20000;
+    document.getElementById("empFormHra").value = 4000;
+    document.getElementById("empFormConveyance").value = 1500;
+  },
+
+  saveEmployeeFromModal: function() {
+    var name = (document.getElementById("empFormName") ? document.getElementById("empFormName").value : "").trim();
+    if (!name) {
+      this.showToast("Please enter Employee Name", "error");
+      return;
+    }
+
+    var editId = document.getElementById("empEditId") ? document.getElementById("empEditId").value : "";
+    var empObj = {
+      id: editId || ("EMP_" + Date.now()),
+      code: document.getElementById("empFormCode") ? document.getElementById("empFormCode").value.trim() : "",
+      name: name,
+      designation: document.getElementById("empFormDesignation") ? document.getElementById("empFormDesignation").value.trim() : "",
+      department: document.getElementById("empFormDepartment") ? document.getElementById("empFormDepartment").value.trim() : "Fabrication Works",
+      doj: document.getElementById("empFormDoj") ? document.getElementById("empFormDoj").value.trim() : "",
+      pan: document.getElementById("empFormPan") ? document.getElementById("empFormPan").value.trim() : "",
+      bankName: document.getElementById("empFormBankName") ? document.getElementById("empFormBankName").value.trim() : "",
+      accountNo: document.getElementById("empFormAccount") ? document.getElementById("empFormAccount").value.trim() : "",
+      ifsc: document.getElementById("empFormIfsc") ? document.getElementById("empFormIfsc").value.trim() : "",
+      uan: document.getElementById("empFormUan") ? document.getElementById("empFormUan").value.trim() : "",
+      basic: parseFloat(document.getElementById("empFormBasic") ? document.getElementById("empFormBasic").value : 0) || 0,
+      hra: parseFloat(document.getElementById("empFormHra") ? document.getElementById("empFormHra").value : 0) || 0,
+      conveyance: parseFloat(document.getElementById("empFormConveyance") ? document.getElementById("empFormConveyance").value : 0) || 0
+    };
+
+    if (editId) {
+      var idx = (this.state.employees || []).findIndex(function(e) { return e.id === editId; });
+      if (idx !== -1) this.state.employees[idx] = empObj;
+    } else {
+      (this.state.employees = this.state.employees || []).push(empObj);
+    }
+
+    localStorage.setItem(this.STORAGE_KEYS.EMPLOYEES, JSON.stringify(this.state.employees));
+    document.getElementById("employeeModal").classList.remove("active");
+    this.renderEmployeesDropdown();
+    this.renderEmployeesList();
+    this.showToast("Employee saved successfully!");
+  },
+
+  deleteEmployee: function(empId) {
+    if (!confirm("Are you sure you want to delete this employee?")) return;
+    this.state.employees = (this.state.employees || []).filter(function(e) { return e.id !== empId; });
+    localStorage.setItem(this.STORAGE_KEYS.EMPLOYEES, JSON.stringify(this.state.employees));
+    this.renderEmployeesDropdown();
+    this.renderEmployeesList();
+    this.showToast("Employee deleted");
+  },
+
 };
 
 document.addEventListener('DOMContentLoaded', function() {

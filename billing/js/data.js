@@ -245,3 +245,71 @@ var INDIAN_STATES = [
   { code: "35", name: "Andaman & Nicobar Islands (35)" },
   { code: "38", name: "Ladakh (38)" }
 ];
+
+
+var DEFAULT_EMPLOYEES = [
+  {
+    id: "EMP_001",
+    code: "OSF-EMP-001",
+    name: "Manish Vishwakarma",
+    designation: "Senior Fabricator & Welder",
+    department: "Fabrication Works",
+    doj: "01/01/2024",
+    pan: "ABCDE1234F",
+    bankName: "State Bank of India",
+    accountNo: "38492019482",
+    ifsc: "SBIN0001234",
+    uan: "100928374619 / 3100928",
+    basic: 24000,
+    hra: 5000,
+    conveyance: 1500
+  },
+  {
+    id: "EMP_002",
+    code: "OSF-EMP-002",
+    name: "Rajesh Sharma",
+    designation: "Fitter & Machine Operator",
+    department: "Production & Fitting",
+    doj: "15/03/2024",
+    pan: "PQXYZ9876K",
+    bankName: "HDFC Bank",
+    accountNo: "501004928192",
+    ifsc: "HDFC0001234",
+    uan: "100928374620 / 3100929",
+    basic: 20000,
+    hra: 4000,
+    conveyance: 1500
+  },
+  {
+    id: "EMP_003",
+    code: "OSF-EMP-003",
+    name: "Amit Kumar",
+    designation: "Industrial Helper / Grinder",
+    department: "Grinding & Finishing",
+    doj: "01/06/2024",
+    pan: "LMNOP5432J",
+    bankName: "Bank of Baroda",
+    accountNo: "049201000291",
+    ifsc: "BARB0VASIXX",
+    uan: "100928374621 / 3100930",
+    basic: 15000,
+    hra: 3000,
+    conveyance: 1000
+  },
+  {
+    id: "EMP_004",
+    code: "OSF-EMP-004",
+    name: "Sanjay Patel",
+    designation: "Workshop Supervisor",
+    department: "Plant Management",
+    doj: "10/01/2023",
+    pan: "ZXCVB8765M",
+    bankName: "ICICI Bank",
+    accountNo: "001201592819",
+    ifsc: "ICIC0000012",
+    uan: "100928374622 / 3100931",
+    basic: 32000,
+    hra: 7000,
+    conveyance: 2500
+  }
+];

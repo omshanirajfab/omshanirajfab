@@ -18,10 +18,12 @@
 </head>
 <body>
 
-  <!-- TOP HEADER -->
+    <!-- TOP HEADER -->
   <header class="top-header">
     <div class="brand-section">
-      <img src="assets/logo.png" alt="OSF Logo" class="brand-logo-img" onerror="this.style.display='none'" />
+      <div class="brand-logo-container">
+        <img src="assets/logo.png" alt="OSF Logo" class="brand-logo-img" onerror="this.style.display='none'" />
+      </div>
       <div class="brand-text">
         <h1>Om Shanirajeshwar Fabrication</h1>
         <p>GST Tax Invoicing & Fabrication Billing System</p>
@@ -33,8 +35,8 @@
       <button type="button" class="nav-btn" data-tab="clientsMaster">👥 Client Master</button>
       <button type="button" class="nav-btn" data-tab="productsMaster">📦 Items & Rates</button>
       <button type="button" class="nav-btn" data-tab="settings">⚙️ Settings & Backup</button>
-      <button type="button" class="btn btn-outline btn-sm" onclick="OSFApp.clearBrowserCacheAndReload()" style="color: #cbd5e1; border-color: #475569; font-size: 0.75rem; padding: 4px 10px;" title="Purge browser cache and force load latest version">🧹 Clear Cache</button>
-      <div id="cloudSyncStatusBadge" style="margin-left: 6px; font-size: 0.75rem; font-weight: 700; background: #064e3b; color: #34d399; padding: 5px 12px; border-radius: 20px; border: 1px solid #059669; display: flex; align-items: center; gap: 6px;">🟢 Cloud Sync Ready</div>
+      <button type="button" class="header-cache-btn" onclick="OSFApp.clearBrowserCacheAndReload()" title="Purge browser cache and force load latest version">🧹 Clear Cache</button>
+      <div id="cloudSyncStatusBadge" class="header-status-badge"><span class="status-dot-pulse"></span><span>Real-Time Cloud Sync</span></div>
     </nav>
   </header>
 

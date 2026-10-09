@@ -36,7 +36,7 @@
       <button type="button" class="nav-btn" data-tab="productsMaster">📦 Items & Rates</button>
       <button type="button" class="nav-btn" data-tab="settings">⚙️ Settings & Backup</button>
       <button type="button" class="header-cache-btn" onclick="OSFApp.clearBrowserCacheAndReload()" title="Purge browser cache and force load latest version">🧹 Clear Cache</button>
-      <div id="cloudSyncStatusBadge" class="header-status-badge"><span class="status-dot-pulse"></span><span>Real-Time Cloud Sync</span></div>
+      <div id="cloudSyncStatusBadge" class="header-status-badge" style="cursor: pointer;" onclick="document.querySelector('[data-tab=settings]').click()" title="Click to configure Cloud Sync & Backup"><span class="status-dot-pulse"></span><span>Real-Time Cloud Sync</span></div>
     </nav>
   </header>
 
@@ -119,32 +119,7 @@
           </div>
         </div>
         <div class="grid-2">
-        <!-- ☁️ Multi-Device Real-Time Cloud Sync -->
-        <div class="card" style="border: 2px solid #38bdf8; background: #f0f9ff; margin-bottom: 20px; grid-column: span 2;">
-          <div class="card-header" style="background: #e0f2fe; border-bottom: 1px solid #bae6fd; display: flex; justify-content: space-between; align-items: center;">
-            <div class="card-title" style="color: #0369a1; display: flex; align-items: center; gap: 8px; margin: 0;">
-              <span>☁️</span>
-              <span>Multi-Device Real-Time Cloud Sync (Any Laptop / Phone / Tablet)</span>
-            </div>
-            <span class="badge badge-green" style="background: #0284c7; color: white;">Real-Time</span>
-          </div>
-          <div style="padding: 16px;">
-            <p style="font-size: 0.85rem; color: #0369a1; margin-bottom: 12px;">
-              Apne kisi bhi Laptop, Mobile ya Tablet par ek sath real-time bills access karne ke liye apna <strong>Business Sync PIN</strong> enter karein:
-            </p>
-            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-              <div class="form-group" style="margin: 0; min-width: 220px;">
-                <label style="font-size: 0.8rem; font-weight: 700; color: #0369a1;">Business Sync PIN / Code:</label>
-                <input type="text" id="syncPinInput" class="form-control" style="font-weight: 800; font-family: monospace; text-transform: uppercase; font-size: 1rem; border: 1.5px solid #0284c7;" placeholder="e.g. OSF-27" value="OSF-27" />
-              </div>
-              <button type="button" class="btn btn-primary" style="margin-top: 18px; font-weight: 700; background: #0284c7; border: none;" onclick="OSFSync.connect(document.getElementById('syncPinInput').value)">🔗 Connect & Sync This Device</button>
-              <button type="button" class="btn btn-success" style="margin-top: 18px; font-weight: 700;" onclick="OSFSync.pushAllToCloud()">☁️ Upload All Invoices to Cloud</button>
-            </div>
-          </div>
-        </div>
-
-          
-          <!-- Billed To Box -->
+        <!-- Billed To Box -->
           <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 16px;">
             <div style="font-size: 0.95rem; font-weight: 700; color: var(--primary-dark); margin-bottom: 12px; display: flex; justify-content: space-between;">
               <span>Billed To (Receiver)</span>
@@ -495,6 +470,30 @@
             </div>
             <button type="button" class="btn btn-primary" onclick="OSFApp.saveCompanySettings()">💾 Save Invoice Rules</button>
           </div>
+
+                  <!-- ☁️ Multi-Device Real-Time Cloud Sync -->
+        <div class="card" style="border: 2px solid #38bdf8; background: #f0f9ff; margin-bottom: 20px;">
+          <div class="card-header" style="background: #e0f2fe; border-bottom: 1px solid #bae6fd; display: flex; justify-content: space-between; align-items: center;">
+            <div class="card-title" style="color: #0369a1; display: flex; align-items: center; gap: 8px; margin: 0;">
+              <span>☁️</span>
+              <span>Multi-Device Real-Time Cloud Sync (Any Laptop / Phone / Tablet)</span>
+            </div>
+            <span class="badge badge-green" style="background: #0284c7; color: white;">Real-Time</span>
+          </div>
+          <div style="padding: 16px;">
+            <p style="font-size: 0.85rem; color: #0369a1; margin-bottom: 12px;">
+              Apne kisi bhi Laptop, Mobile ya Tablet par ek sath real-time bills access karne ke liye apna <strong>Business Sync PIN</strong> enter karein:
+            </p>
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+              <div class="form-group" style="margin: 0; min-width: 220px;">
+                <label style="font-size: 0.8rem; font-weight: 700; color: #0369a1;">Business Sync PIN / Code:</label>
+                <input type="text" id="syncPinInput" class="form-control" style="font-weight: 800; font-family: monospace; text-transform: uppercase; font-size: 1rem; border: 1.5px solid #0284c7;" placeholder="e.g. OSF-27" value="OSF-27" />
+              </div>
+              <button type="button" class="btn btn-primary" style="margin-top: 18px; font-weight: 700; background: #0284c7; border: none;" onclick="OSFSync.connect(document.getElementById('syncPinInput').value)">🔗 Connect & Sync This Device</button>
+              <button type="button" class="btn btn-success" style="margin-top: 18px; font-weight: 700;" onclick="OSFSync.pushAllToCloud()">☁️ Upload All Invoices to Cloud</button>
+            </div>
+          </div>
+        </div>
 
           <!-- 100% Private Offline Backup -->
           <div class="card" style="border: 2px dashed #93c5fd; background: #eff6ff;">

@@ -1900,8 +1900,8 @@ var OSFApp = {
       empName: document.getElementById("salEmpName") ? document.getElementById("salEmpName").value : "",
       designation: document.getElementById("salDesignation") ? document.getElementById("salDesignation").value : "",
       department: document.getElementById("salDepartment") ? document.getElementById("salDepartment").value : "",
-      doj: document.getElementById("salDoj") ? document.getElementById("salDoj").value : "",
-      pan: document.getElementById("salPan") ? document.getElementById("salPan").value : "",
+      
+      
       bankName: document.getElementById("salBankName") ? document.getElementById("salBankName").value : "",
       bankAccount: document.getElementById("salBankAccount") ? document.getElementById("salBankAccount").value : "",
       ifsc: document.getElementById("salIfsc") ? document.getElementById("salIfsc").value : "",

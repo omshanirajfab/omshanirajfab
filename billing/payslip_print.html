@@ -455,38 +455,26 @@
             <tr>
               <td class="label">Designation:</td>
               <td class="val">${slipData.designation || "Fabricator / Welder"}</td>
-              <td class="label">Date of Joining:</td>
-              <td class="val">${slipData.doj || "N/A"}</td>
-            </tr>
-            <tr>
               <td class="label">Bank Name:</td>
               <td class="val">${slipData.bankName || "State Bank of India"}</td>
+            </tr>
+            <tr>
               <td class="label">Bank Account No:</td>
               <td class="val" style="font-family:var(--mono);">${slipData.bankAccount || "N/A"}</td>
-            </tr>
-            <tr>
               <td class="label">IFSC Code:</td>
               <td class="val" style="font-family:var(--mono);">${slipData.ifsc || "N/A"}</td>
-              <td class="label">PAN Number:</td>
-              <td class="val" style="font-family:var(--mono);">${slipData.pan || "N/A"}</td>
             </tr>
             <tr>
-              <td class="label">UAN / PF No:</td>
+              <td class="label">UAN / PF / ESIC:</td>
               <td class="val" style="font-family:var(--mono);">${slipData.uan || "N/A"}</td>
-              <td class="label">ESIC Number:</td>
-              <td class="val" style="font-family:var(--mono);">${slipData.esicNo || "N/A"}</td>
-            </tr>
-            <tr>
               <td class="label">Total Working Days:</td>
               <td class="val"><strong>${slipData.totalDays || 30} Days</strong></td>
-              <td class="label">Days Worked / Present:</td>
-              <td class="val"><strong>${slipData.presentDays || 30} Days</strong></td>
             </tr>
             <tr>
-              <td class="label">Overtime Hours:</td>
-              <td class="val">${slipData.otHours ? slipData.otHours + " Hours" : "0 Hours"}</td>
-              <td class="label">Absent / LOP:</td>
-              <td class="val">${slipData.absentDays ? slipData.absentDays + " Days" : "0 Days"}</td>
+              <td class="label">Days Worked / Present:</td>
+              <td class="val"><strong>${slipData.presentDays || 30} Days</strong></td>
+              <td class="label">Overtime / Absent:</td>
+              <td class="val">OT: ${slipData.otHours || 0} Hrs | Absent: ${slipData.absentDays || 0} Days</td>
             </tr>
           </table>
 

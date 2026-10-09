@@ -379,11 +379,11 @@
       </div>
     </section>
 
-    <!-- ================= VIEW 5: SETTINGS & BACKUP ================= -->
+        <!-- ================= VIEW 5: SETTINGS & BACKUP ================= -->
     <section id="settingsView" class="view-section">
       <div class="grid-2">
         
-        <!-- Company & Bank Details -->
+        <!-- Left Column: Company & Bank Details -->
         <div class="card">
           <div class="card-title" style="margin-bottom: 16px;">🏢 Company Profile & Bank Details</div>
           <div class="form-group">
@@ -445,13 +445,16 @@
               <label>Branch</label>
               <input type="text" id="settBranch" class="form-control" />
             </div>
-          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          </div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px;">
             <button type="button" class="btn btn-primary" onclick="OSFApp.saveCompanySettings()">💾 Save Profile & Bank Info</button>
             <button type="button" class="btn btn-outline" onclick="OSFApp.resetCompanySettingsToDefault()">🔄 Reset to OSF Defaults</button>
           </div>
+        </div>
 
-        <!-- Invoice Numbering & Backup -->
+        <!-- Right Column: Invoice Rules, Cloud Sync, Backup -->
         <div>
+          <!-- Invoice Rules Card -->
           <div class="card">
             <div class="card-title" style="margin-bottom: 16px;">⚙️ Invoice Configuration & Terms</div>
             <div class="grid-2">
@@ -466,42 +469,42 @@
             </div>
             <div class="form-group">
               <label>Terms & Conditions (One per line)</label>
-              <textarea id="settTerms" class="form-control" style="min-height: 120px;"></textarea>
+              <textarea id="settTerms" class="form-control" style="min-height: 100px;"></textarea>
             </div>
             <button type="button" class="btn btn-primary" onclick="OSFApp.saveCompanySettings()">💾 Save Invoice Rules</button>
           </div>
 
-                  <!-- ☁️ Multi-Device Real-Time Cloud Sync -->
-        <div class="card" style="border: 2px solid #38bdf8; background: #f0f9ff; margin-bottom: 20px;">
-          <div class="card-header" style="background: #e0f2fe; border-bottom: 1px solid #bae6fd; display: flex; justify-content: space-between; align-items: center;">
-            <div class="card-title" style="color: #0369a1; display: flex; align-items: center; gap: 8px; margin: 0;">
-              <span>☁️</span>
-              <span>Multi-Device Real-Time Cloud Sync (Any Laptop / Phone / Tablet)</span>
-            </div>
-            <span class="badge badge-green" style="background: #0284c7; color: white;">Real-Time</span>
-          </div>
-          <div style="padding: 16px;">
-            <p style="font-size: 0.85rem; color: #0369a1; margin-bottom: 12px;">
-              Apne kisi bhi Laptop, Mobile ya Tablet par ek sath real-time bills access karne ke liye apna <strong>Business Sync PIN</strong> enter karein:
-            </p>
-            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-              <div class="form-group" style="margin: 0; min-width: 220px;">
-                <label style="font-size: 0.8rem; font-weight: 700; color: #0369a1;">Business Sync PIN / Code:</label>
-                <input type="text" id="syncPinInput" class="form-control" style="font-weight: 800; font-family: monospace; text-transform: uppercase; font-size: 1rem; border: 1.5px solid #0284c7;" placeholder="e.g. OSF-27" value="OSF-27" />
+          <!-- Multi-Device Real-Time Cloud Sync Card -->
+          <div class="card" style="border: 2px solid #38bdf8; background: #f0f9ff; margin-bottom: 20px;">
+            <div class="card-header" style="background: #e0f2fe; border-bottom: 1px solid #bae6fd; display: flex; justify-content: space-between; align-items: center; margin: -20px -20px 16px -20px; padding: 12px 20px; border-radius: 8px 8px 0 0;">
+              <div class="card-title" style="color: #0369a1; display: flex; align-items: center; gap: 8px; margin: 0; font-size: 0.95rem;">
+                <span>☁️</span>
+                <span>Multi-Device Real-Time Cloud Sync</span>
               </div>
-              <button type="button" class="btn btn-primary" style="margin-top: 18px; font-weight: 700; background: #0284c7; border: none;" onclick="OSFSync.connect(document.getElementById('syncPinInput').value)">🔗 Connect & Sync This Device</button>
-              <button type="button" class="btn btn-success" style="margin-top: 18px; font-weight: 700;" onclick="OSFSync.pushAllToCloud()">☁️ Upload All Invoices to Cloud</button>
+              <span class="badge badge-green" style="background: #0284c7; color: white;">Real-Time</span>
+            </div>
+            <div>
+              <p style="font-size: 0.82rem; color: #0369a1; margin-bottom: 12px; line-height: 1.4;">
+                Apne kisi bhi Laptop, Mobile ya Tablet par ek sath real-time bills access karne ke liye apna <strong>Business Sync PIN</strong> enter karein:
+              </p>
+              <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                <div class="form-group" style="margin: 0; flex: 1; min-width: 160px;">
+                  <label style="font-size: 0.78rem; font-weight: 700; color: #0369a1; margin-bottom: 4px;">Sync PIN / Code:</label>
+                  <input type="text" id="syncPinInput" class="form-control" style="font-weight: 800; font-family: monospace; text-transform: uppercase; font-size: 0.95rem; border: 1.5px solid #0284c7;" placeholder="e.g. OSF-27" value="OSF-27" />
+                </div>
+                <button type="button" class="btn btn-primary" style="font-weight: 700; background: #0284c7; border: none; padding: 8px 14px;" onclick="OSFSync.connect(document.getElementById('syncPinInput').value)">🔗 Connect & Sync</button>
+                <button type="button" class="btn btn-success" style="font-weight: 700; padding: 8px 14px;" onclick="OSFSync.pushAllToCloud()">☁️ Upload All Invoices</button>
+              </div>
             </div>
           </div>
-        </div>
 
-          <!-- 100% Private Offline Backup -->
+          <!-- 100% Private Offline Backup Card -->
           <div class="card" style="border: 2px dashed #93c5fd; background: #eff6ff;">
             <div class="card-title" style="color: #1e40af; margin-bottom: 8px;">🔒 100% Private Local Backup & Restore</div>
-            <p style="font-size: 0.85rem; color: #3b82f6; margin-bottom: 14px;">All your invoices, clients, and items are stored locally in your browser with zero external tracking.</p>
+            <p style="font-size: 0.82rem; color: #3b82f6; margin-bottom: 14px; line-height: 1.4;">All your invoices, clients, and items are stored locally in your browser with zero external tracking.</p>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
               <button type="button" class="btn btn-primary" onclick="OSFApp.downloadBackupJSON()">📥 Download Backup JSON</button>
-              <label class="btn btn-outline" style="cursor: pointer;">
+              <label class="btn btn-outline" style="cursor: pointer; margin: 0;">
                 📤 Restore Backup JSON
                 <input type="file" accept=".json" style="display: none;" onchange="OSFApp.importBackupJSON(this)" />
               </label>

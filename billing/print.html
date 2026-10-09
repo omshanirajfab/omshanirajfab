@@ -82,10 +82,10 @@
       <span id="toolbarInvoiceTitle">OSF Tax Invoice Preview</span>
     </div>
     <div class="print-btn-group">
-      <button type="button" class="btn-action-print" onclick="window.print()">
+      <button type="button" class="btn-action-print" onclick="executePrint()">
         🖨️ Save as PDF / Print Invoice
       </button>
-      <button type="button" class="btn-action-close" onclick="window.close()">
+      <button type="button" class="btn-action-close" onclick="executeClose()">
         ✕ Close Window
       </button>
     </div>
@@ -100,6 +100,28 @@
   <script src="js/data.js?v=20260921_v3"></script>
   <script src="js/app.js?v=20260921_v3"></script>
   <script>
+    function executePrint() {
+      try {
+        if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.desktopNative) {
+          window.webkit.messageHandlers.desktopNative.postMessage({ action: "print" });
+          return;
+        }
+      } catch(e) {
+        console.warn("Native print bridge error:", e);
+      }
+      window.print();
+    }
+
+    function executeClose() {
+      try {
+        if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.desktopNative) {
+          window.webkit.messageHandlers.desktopNative.postMessage({ action: "close" });
+          return;
+        }
+      } catch(e) {}
+      window.close();
+    }
+
     function renderInvoiceNow() {
       try {
         OSFApp.loadState();

@@ -411,10 +411,10 @@
       <span id="toolbarTitle">OSF Salary Slip Print Preview</span>
     </div>
     <div class="print-btn-group">
-      <button type="button" class="btn-action-print" onclick="window.print()">
+      <button type="button" class="btn-action-print" onclick="executePrint()">
         🖨️ Save as PDF / Print Salary Slip
       </button>
-      <button type="button" class="btn-action-close" onclick="window.close()">
+      <button type="button" class="btn-action-close" onclick="executeClose()">
         ✕ Close Window
       </button>
     </div>
@@ -428,6 +428,28 @@
 
   <script src="js/data.js"></script>
   <script>
+    function executePrint() {
+      try {
+        if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.desktopNative) {
+          window.webkit.messageHandlers.desktopNative.postMessage({ action: "print" });
+          return;
+        }
+      } catch(e) {
+        console.warn("Native print bridge error:", e);
+      }
+      window.print();
+    }
+
+    function executeClose() {
+      try {
+        if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.desktopNative) {
+          window.webkit.messageHandlers.desktopNative.postMessage({ action: "close" });
+          return;
+        }
+      } catch(e) {}
+      window.close();
+    }
+
     function formatINR(val) {
       var num = parseFloat(val) || 0;
       return num.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });

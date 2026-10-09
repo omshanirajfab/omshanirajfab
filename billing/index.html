@@ -371,7 +371,32 @@
           <div class="grid-4" style="margin-bottom: 12px;">
             <div class="form-group">
               <label>Salary Month & Year *</label>
-              <input type="text" id="salPayMonth" class="form-control" placeholder="e.g. October 2026" value="October 2026" oninput="OSFApp.calculateSalaryTotals()" />
+              <div style="display: flex; gap: 6px;">
+                <select id="salMonthSelect" class="form-control" style="font-weight: 700;" onchange="OSFApp.onSalaryMonthYearChange()">
+                  <option value="January">January</option>
+                  <option value="February">February</option>
+                  <option value="March">March</option>
+                  <option value="April">April</option>
+                  <option value="May">May</option>
+                  <option value="June">June</option>
+                  <option value="July">July</option>
+                  <option value="August">August</option>
+                  <option value="September">September</option>
+                  <option value="October" selected>October</option>
+                  <option value="November">November</option>
+                  <option value="December">December</option>
+                </select>
+                <select id="salYearSelect" class="form-control" style="width: 105px; font-weight: 700;" onchange="OSFApp.onSalaryMonthYearChange()">
+                  <option value="2024">2024</option>
+                  <option value="2025">2025</option>
+                  <option value="2026" selected>2026</option>
+                  <option value="2027">2027</option>
+                  <option value="2028">2028</option>
+                  <option value="2029">2029</option>
+                  <option value="2030">2030</option>
+                </select>
+              </div>
+              <input type="hidden" id="salPayMonth" value="October 2026" />
             </div>
             <div class="form-group">
               <label>Pay / Disbursement Date</label>

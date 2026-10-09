@@ -1756,6 +1756,32 @@ var OSFApp = {
      SALARY SLIP & PAYROLL MANAGEMENT ENGINE
      ========================================================================== */
 
+  onSalaryMonthYearChange: function() {
+    var mSel = document.getElementById("salMonthSelect");
+    var ySel = document.getElementById("salYearSelect");
+    var month = mSel ? mSel.value : "October";
+    var year = ySel ? ySel.value : "2026";
+    
+    var combined = month + " " + year;
+    var hidInput = document.getElementById("salPayMonth");
+    if (hidInput) hidInput.value = combined;
+
+    // Calculate total days in month
+    var monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    var mIdx = monthNames.indexOf(month);
+    if (mIdx !== -1) {
+      var daysInMonth = new Date(parseInt(year, 10), mIdx + 1, 0).getDate();
+      var totalDaysInput = document.getElementById("salTotalDays");
+      var presentDaysInput = document.getElementById("salPresentDays");
+      if (totalDaysInput) totalDaysInput.value = daysInMonth;
+      if (presentDaysInput && (parseInt(presentDaysInput.value, 10) >= 28 || parseInt(presentDaysInput.value, 10) <= 31)) {
+        presentDaysInput.value = daysInMonth;
+      }
+    }
+
+    this.calculateSalaryTotals();
+  },
+
   initSalarySlip: function() {
     this.renderEmployeesDropdown();
     this.renderEmployeesList();
@@ -1766,12 +1792,14 @@ var OSFApp = {
       dateInput.value = new Date().toISOString().split("T")[0];
     }
     
-    var monthInput = document.getElementById("salPayMonth");
-    if (monthInput && !monthInput.value) {
-      var d = new Date();
-      var monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-      monthInput.value = monthNames[d.getMonth()] + " " + d.getFullYear();
-    }
+    var d = new Date();
+    var monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    var curMonth = monthNames[d.getMonth()];
+    var curYear = String(d.getFullYear());
+
+    if (document.getElementById("salMonthSelect")) document.getElementById("salMonthSelect").value = curMonth;
+    if (document.getElementById("salYearSelect")) document.getElementById("salYearSelect").value = curYear;
+    if (document.getElementById("salPayMonth")) document.getElementById("salPayMonth").value = curMonth + " " + curYear;
 
     this.calculateSalaryTotals();
   },
@@ -2016,6 +2044,13 @@ var OSFApp = {
     if (!slip) return;
 
     if (document.getElementById("salPayMonth")) document.getElementById("salPayMonth").value = slip.payMonth || "";
+    if (slip.payMonth) {
+      var parts = slip.payMonth.trim().split(" ");
+      if (parts.length >= 2) {
+        if (document.getElementById("salMonthSelect")) document.getElementById("salMonthSelect").value = parts[0];
+        if (document.getElementById("salYearSelect")) document.getElementById("salYearSelect").value = parts[1];
+      }
+    }
     if (document.getElementById("salPayDate")) document.getElementById("salPayDate").value = slip.payDate || "";
     if (document.getElementById("salEmpCode")) document.getElementById("salEmpCode").value = slip.empCode || "";
     if (document.getElementById("salEmpName")) document.getElementById("salEmpName").value = slip.empName || "";

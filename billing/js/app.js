@@ -214,6 +214,7 @@ var OSFApp = {
       poDate: todayStr,
       transport: "NA",
       vehicleNo: "",
+      includeDigitalSignature: (this.state.company && this.state.company.showDigitalSignatureInvoice !== false),
       billedTo: {
         company: "",
         address: "",
@@ -292,6 +293,11 @@ var OSFApp = {
     setVal('shipToCompany', (inv.shippedTo && inv.shippedTo.company) || '');
     setVal('shipToAddress', (inv.shippedTo && inv.shippedTo.address) || '');
     setVal('shipToGstin', (inv.shippedTo && inv.shippedTo.gstin) || '');
+
+    var chkSig = document.getElementById('invIncludeSignature');
+    if (chkSig) {
+      chkSig.checked = (inv.includeDigitalSignature !== undefined) ? inv.includeDigitalSignature : (this.state.company && this.state.company.showDigitalSignatureInvoice !== false);
+    }
 
     this.renderItemsTable();
   },
@@ -1217,21 +1223,17 @@ var OSFApp = {
             </div>
           </td>
           <td colspan="5" style="vertical-align: top; padding: 4px 6px;">
-            <table style="width: 100%; height: 85px; border: none; border-collapse: collapse;">
+            <table style="width: 100%; min-height: 85px; border: none; border-collapse: collapse;">
               <tr>
-                <td style="width: 50%; border: none; vertical-align: bottom; text-align: center; padding-bottom: 4px;">
+                <td style="width: 48%; border: none; vertical-align: bottom; text-align: center; padding-bottom: 4px;">
                   <div style="border-top: 1px dashed #666; padding-top: 3px; font-size: 9.5px; font-weight: bold;">Receiver's Signature</div>
                 </td>
-                <td style="width: 50%; border: none; vertical-align: top; text-align: center; padding-top: 3px; padding-bottom: 4px; position: relative;">
+                <td style="width: 52%; border: none; vertical-align: top; text-align: center; padding-top: 3px; padding-bottom: 4px; position: relative;">
                   <div style="font-size: 10px; font-weight: bold;">For ${comp.companyName}</div>
-                  <div style="height: 46px; display: flex; align-items: center; justify-content: center;">
-                    ${(comp.showDigitalSignature !== false && comp.digitalSignature) ? `
-                      <img src="${comp.digitalSignature}" style="max-height: 44px; max-width: 130px; object-fit: contain;" alt="Digital Signature" />
-                    ` : `
-                      <div style="height: 44px;"></div>
-                    `}
+                  <div style="min-height: 46px; display: flex; align-items: center; justify-content: center; padding: 2px 0;">
+                    ${this.generateTallyDscHTML('invoice', inv.invoiceDate)}
                   </div>
-                  <div style="border-top: 1px solid #000; padding-top: 3px; font-size: 9.5px; font-weight: bold;">Authorised Signatory</div>
+                  <div style="border-top: 1px solid #000; padding-top: 3px; font-size: 9.5px; font-weight: bold;">${comp.digitalSignatoryRole || 'Authorised Signatory'}</div>
                 </td>
               </tr>
             </table>
@@ -1476,6 +1478,18 @@ var OSFApp = {
     setVal('settInvoicePrefix', comp.invoicePrefix || 'OSF/2026-27/');
     setVal('settStartingNo', comp.startingInvoiceNumber || 1);
     setVal('settTerms', (comp.termsAndConditions || []).join('\n'));
+
+    var chkInv = document.getElementById('settShowSigInvoice');
+    if (chkInv) chkInv.checked = comp.showDigitalSignatureInvoice !== false && comp.showDigitalSignature !== false;
+
+    var chkSal = document.getElementById('settShowSigSalary');
+    if (chkSal) chkSal.checked = comp.showDigitalSignatureSalary !== false && comp.showDigitalSignature !== false;
+
+    setVal('settSigName', comp.digitalSignatoryName || 'Pawan Sharma');
+    setVal('settSigRole', comp.digitalSignatoryRole || 'Authorised Signatory');
+    setVal('settSigLocation', comp.digitalSignatureLocation || 'PCMC, Pune, Maharashtra');
+    setVal('settSigReason', comp.digitalSignatureReason || 'Official Tax Invoice & Verification');
+    setVal('settSigFormat', comp.digitalSignatureFormat || 'both');
 
     this.renderDashboardBankDetails();
     this.renderSignaturePreview();
@@ -2228,7 +2242,7 @@ var OSFApp = {
   },
 
   /* ==========================================================================
-     DIGITAL SIGNATURE & COMPANY STAMP ENGINE
+     DIGITAL SIGNATURE & TALLY DSC ENGINE
      ========================================================================== */
 
   signatureCanvas: null,
@@ -2236,15 +2250,80 @@ var OSFApp = {
   isDrawing: false,
   sigColor: "#0f172a",
 
+  generateTallyDscHTML: function(docType, customDate) {
+    var comp = this.state.company || DEFAULT_COMPANY_CONFIG;
+    var enabled = false;
+
+    if (docType === 'invoice') {
+      var inv = this.state.currentInvoice;
+      enabled = (inv && inv.includeDigitalSignature !== undefined) ? inv.includeDigitalSignature : (comp.showDigitalSignatureInvoice !== false && comp.showDigitalSignature !== false);
+    } else if (docType === 'salary') {
+      var slip = this.state.currentPayslip;
+      enabled = (slip && slip.includeDigitalSignature !== undefined) ? slip.includeDigitalSignature : (comp.showDigitalSignatureSalary !== false && comp.showDigitalSignature !== false);
+    } else {
+      enabled = comp.showDigitalSignature !== false;
+    }
+
+    if (!enabled) {
+      return '<div style="height: 44px;"></div>';
+    }
+
+    var signerName = comp.digitalSignatoryName || comp.companyName || "Authorised Signatory";
+    var signerRole = comp.digitalSignatoryRole || "Authorised Signatory";
+    var location = comp.digitalSignatureLocation || "PCMC, Pune, Maharashtra";
+    var format = comp.digitalSignatureFormat || "both";
+    var signatureAsset = comp.digitalSignature || "";
+
+    var now = new Date();
+    var dStr = customDate || now.toISOString().split('T')[0];
+    var timeStr = ("0" + now.getHours()).slice(-2) + ":" + ("0" + now.getMinutes()).slice(-2) + ":" + ("0" + now.getSeconds()).slice(-2);
+    var fullDateTime = dStr + " " + timeStr + " +05:30";
+
+    var html = '';
+
+    if (format === 'image_only' && signatureAsset) {
+      html = '<div style="height: 46px; display: flex; align-items: center; justify-content: center;"><img src="' + signatureAsset + '" class="tally-dsc-sign-img" style="max-height: 44px; max-width: 130px; object-fit: contain;" alt="Digital Signature" /></div>';
+    } else if (format === 'tally_dsc') {
+      html = `
+        <div class="tally-dsc-container">
+          <div class="tally-dsc-header">
+            <span class="tally-dsc-check">✓</span>
+            <span>Digitally Signed (DSC)</span>
+          </div>
+          <div class="tally-dsc-info">
+            <div><span class="lbl">Signer:</span> ${signerName}</div>
+            <div><span class="lbl">Role:</span> ${signerRole}</div>
+            <div><span class="lbl">Date:</span> ${fullDateTime}</div>
+            <div><span class="lbl">Place:</span> ${location}</div>
+          </div>
+        </div>
+      `;
+    } else {
+      // both (combined)
+      html = `
+        <div class="tally-dsc-container">
+          <div class="tally-dsc-header">
+            <span class="tally-dsc-check">✓</span>
+            <span>Digitally Signed (DSC)</span>
+          </div>
+          <div class="tally-dsc-info">
+            <div><span class="lbl">Signer:</span> ${signerName}</div>
+            <div><span class="lbl">Date:</span> ${fullDateTime}</div>
+            <div><span class="lbl">Place:</span> ${location}</div>
+          </div>
+          ${signatureAsset ? `<img src="${signatureAsset}" class="tally-dsc-sign-img" alt="Digital Signature" />` : ''}
+        </div>
+      `;
+    }
+
+    return html;
+  },
+
   renderSignaturePreview: function() {
-    var comp = this.state.company;
+    var comp = this.state.company || DEFAULT_COMPANY_CONFIG;
     var previewImg = document.getElementById("sigPreviewImg");
     var placeholder = document.getElementById("sigPlaceholderText");
-    var chkShow = document.getElementById("settShowSignature");
-
-    if (chkShow && comp) {
-      chkShow.checked = comp.showDigitalSignature !== false;
-    }
+    var previewLiveRoot = document.getElementById("tallyDscLivePreviewRoot");
 
     if (comp && comp.digitalSignature) {
       if (previewImg) {
@@ -2259,6 +2338,56 @@ var OSFApp = {
       }
       if (placeholder) placeholder.style.display = "block";
     }
+
+    if (previewLiveRoot) {
+      previewLiveRoot.innerHTML = this.generateTallyDscHTML('preview');
+    }
+  },
+
+  updateDigitalSignatureSettings: function() {
+    if (!this.state.company) this.state.company = Object.assign({}, DEFAULT_COMPANY_CONFIG);
+    var comp = this.state.company;
+
+    var chkInv = document.getElementById("settShowSigInvoice");
+    if (chkInv) comp.showDigitalSignatureInvoice = chkInv.checked;
+
+    var chkSal = document.getElementById("settShowSigSalary");
+    if (chkSal) comp.showDigitalSignatureSalary = chkSal.checked;
+
+    var nameEl = document.getElementById("settSigName");
+    if (nameEl) comp.digitalSignatoryName = nameEl.value;
+
+    var roleEl = document.getElementById("settSigRole");
+    if (roleEl) comp.digitalSignatoryRole = roleEl.value;
+
+    var locEl = document.getElementById("settSigLocation");
+    if (locEl) comp.digitalSignatureLocation = locEl.value;
+
+    var fmtEl = document.getElementById("settSigFormat");
+    if (fmtEl) comp.digitalSignatureFormat = fmtEl.value;
+
+    var rsnEl = document.getElementById("settSigReason");
+    if (rsnEl) comp.digitalSignatureReason = rsnEl.value;
+
+    this.saveState();
+    this.renderSignaturePreview();
+    this.updateLivePreview();
+  },
+
+  toggleInvoiceSignature: function(checked) {
+    if (!this.state.currentInvoice) this.state.currentInvoice = {};
+    this.state.currentInvoice.includeDigitalSignature = checked;
+    this.saveState();
+    this.updateLivePreview();
+    this.showToast(checked ? "Digital Signature attached to Invoice!" : "Digital Signature removed from Invoice");
+  },
+
+  toggleSalarySignature: function(checked) {
+    if (!this.state.currentPayslip) this.state.currentPayslip = {};
+    this.state.currentPayslip.includeDigitalSignature = checked;
+    if (this.state.company) this.state.company.showDigitalSignatureSalary = checked;
+    this.saveState();
+    this.showToast(checked ? "Digital Signature attached to Payslip!" : "Digital Signature removed from Payslip");
   },
 
   handleSignatureUpload: function(input) {
@@ -2274,27 +2403,22 @@ var OSFApp = {
       self.state.company.showDigitalSignature = true;
       self.saveState();
       self.renderSignaturePreview();
-      self.showToast("Digital Signature & Stamp uploaded successfully!");
+      self.updateLivePreview();
+      self.showToast("Digital Signature & Stamp asset saved successfully!");
     };
 
     reader.readAsDataURL(file);
   },
 
   removeDigitalSignature: function() {
-    if (!confirm("Are you sure you want to remove the digital signature / stamp?")) return;
+    if (!confirm("Are you sure you want to remove the physical signature asset? (Tally text certificate will still be active)")) return;
     if (this.state.company) {
       this.state.company.digitalSignature = "";
     }
     this.saveState();
     this.renderSignaturePreview();
-    this.showToast("Digital signature removed");
-  },
-
-  toggleDigitalSignature: function(enabled) {
-    if (!this.state.company) this.state.company = {};
-    this.state.company.showDigitalSignature = enabled;
-    this.saveState();
-    this.showToast(enabled ? "Digital signature enabled on bills" : "Digital signature hidden from bills");
+    this.updateLivePreview();
+    this.showToast("Signature asset removed");
   },
 
   openSignaturePadModal: function() {
@@ -2383,6 +2507,7 @@ var OSFApp = {
     this.state.company.showDigitalSignature = true;
     this.saveState();
     this.renderSignaturePreview();
+    this.updateLivePreview();
     document.getElementById("signaturePadModal").classList.remove("active");
     this.showToast("Drawn signature saved and applied to bills!");
   },

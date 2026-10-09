@@ -29,7 +29,16 @@ var DEFAULT_COMPANY_CONFIG = {
     "Interest @ 18% p.a. will be charged if the payment is not made within the stipulated due date.",
     "Subject to 'Maharashtra' Jurisdiction only.",
     "Our risk and responsibility ceases as soon as the goods leave our premises/delivery."
-  ]
+  ],
+  showDigitalSignature: true,
+  showDigitalSignatureInvoice: true,
+  showDigitalSignatureSalary: true,
+  digitalSignatoryName: "Pawan Sharma",
+  digitalSignatoryRole: "Authorised Signatory",
+  digitalSignatureLocation: "PCMC, Pune, Maharashtra",
+  digitalSignatureReason: "Official Tax Invoice & Verification",
+  digitalSignatureFormat: "both",
+  digitalSignature: null
 };
 
 var DEFAULT_CLIENTS = [

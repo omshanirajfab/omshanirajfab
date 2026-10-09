@@ -309,3 +309,66 @@
     page-break-inside: avoid !important;
   }
 }
+
+/* ==========================================================================
+   Tally Prime Style Digital Signature & DSC Stamp
+   ========================================================================== */
+.tally-dsc-container {
+  display: inline-block;
+  text-align: left;
+  width: 100%;
+  max-width: 190px;
+  border: 1px solid #16a34a;
+  background-color: #f0fdf4;
+  padding: 3px 5px;
+  border-radius: 3px;
+  box-sizing: border-box;
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  margin: 1px auto;
+}
+
+.tally-dsc-header {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 8.5px;
+  font-weight: 800;
+  color: #15803d;
+  border-bottom: 0.5px solid #86efac;
+  padding-bottom: 1px;
+  margin-bottom: 2px;
+}
+
+.tally-dsc-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 10px;
+  height: 10px;
+  background: #16a34a;
+  color: #ffffff;
+  border-radius: 50%;
+  font-size: 7.5px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.tally-dsc-info {
+  font-size: 7.5px;
+  line-height: 1.2;
+  color: #14532d;
+}
+
+.tally-dsc-info .lbl {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.tally-dsc-sign-img {
+  max-height: 36px;
+  max-width: 110px;
+  object-fit: contain;
+  margin: 1px auto;
+  display: block;
+}
+

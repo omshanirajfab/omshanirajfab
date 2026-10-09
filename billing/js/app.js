@@ -1222,8 +1222,15 @@ var OSFApp = {
                 <td style="width: 50%; border: none; vertical-align: bottom; text-align: center; padding-bottom: 4px;">
                   <div style="border-top: 1px dashed #666; padding-top: 3px; font-size: 9.5px; font-weight: bold;">Receiver's Signature</div>
                 </td>
-                <td style="width: 50%; border: none; vertical-align: top; text-align: center; padding-top: 3px; padding-bottom: 4px;">
-                  <div style="font-size: 10px; font-weight: bold; margin-bottom: 44px;">For ${comp.companyName}</div>
+                <td style="width: 50%; border: none; vertical-align: top; text-align: center; padding-top: 3px; padding-bottom: 4px; position: relative;">
+                  <div style="font-size: 10px; font-weight: bold;">For ${comp.companyName}</div>
+                  <div style="height: 46px; display: flex; align-items: center; justify-content: center;">
+                    ${(comp.showDigitalSignature !== false && comp.digitalSignature) ? `
+                      <img src="${comp.digitalSignature}" style="max-height: 44px; max-width: 130px; object-fit: contain;" alt="Digital Signature" />
+                    ` : `
+                      <div style="height: 44px;"></div>
+                    `}
+                  </div>
                   <div style="border-top: 1px solid #000; padding-top: 3px; font-size: 9.5px; font-weight: bold;">Authorised Signatory</div>
                 </td>
               </tr>
@@ -1471,6 +1478,7 @@ var OSFApp = {
     setVal('settTerms', (comp.termsAndConditions || []).join('\n'));
 
     this.renderDashboardBankDetails();
+    this.renderSignaturePreview();
   },
 
   renderDashboardBankDetails: function() {
@@ -1516,6 +1524,7 @@ var OSFApp = {
 
     this.saveState();
     this.renderDashboardBankDetails();
+    this.renderSignaturePreview();
     this.showToast("Company profile & settings saved successfully!");
   },
 
@@ -2216,6 +2225,168 @@ var OSFApp = {
     this.renderEmployeesDropdown();
     this.renderEmployeesList();
     this.showToast("Employee deleted");
+  },
+
+,
+
+  /* ==========================================================================
+     DIGITAL SIGNATURE & COMPANY STAMP ENGINE
+     ========================================================================== */
+
+  signatureCanvas: null,
+  signatureCtx: null,
+  isDrawing: false,
+  sigColor: "#0f172a",
+
+  renderSignaturePreview: function() {
+    var comp = this.state.company;
+    var previewImg = document.getElementById("sigPreviewImg");
+    var placeholder = document.getElementById("sigPlaceholderText");
+    var chkShow = document.getElementById("settShowSignature");
+
+    if (chkShow && comp) {
+      chkShow.checked = comp.showDigitalSignature !== false;
+    }
+
+    if (comp && comp.digitalSignature) {
+      if (previewImg) {
+        previewImg.src = comp.digitalSignature;
+        previewImg.style.display = "block";
+      }
+      if (placeholder) placeholder.style.display = "none";
+    } else {
+      if (previewImg) {
+        previewImg.src = "";
+        previewImg.style.display = "none";
+      }
+      if (placeholder) placeholder.style.display = "block";
+    }
+  },
+
+  handleSignatureUpload: function(input) {
+    if (!input.files || !input.files[0]) return;
+    var file = input.files[0];
+    var self = this;
+    var reader = new FileReader();
+
+    reader.onload = function(e) {
+      var base64 = e.target.result;
+      if (!self.state.company) self.state.company = {};
+      self.state.company.digitalSignature = base64;
+      self.state.company.showDigitalSignature = true;
+      self.saveState();
+      self.renderSignaturePreview();
+      self.showToast("Digital Signature & Stamp uploaded successfully!");
+    };
+
+    reader.readAsDataURL(file);
+  },
+
+  removeDigitalSignature: function() {
+    if (!confirm("Are you sure you want to remove the digital signature / stamp?")) return;
+    if (this.state.company) {
+      this.state.company.digitalSignature = "";
+    }
+    this.saveState();
+    this.renderSignaturePreview();
+    this.showToast("Digital signature removed");
+  },
+
+  toggleDigitalSignature: function(enabled) {
+    if (!this.state.company) this.state.company = {};
+    this.state.company.showDigitalSignature = enabled;
+    this.saveState();
+    this.showToast(enabled ? "Digital signature enabled on bills" : "Digital signature hidden from bills");
+  },
+
+  openSignaturePadModal: function() {
+    var modal = document.getElementById("signaturePadModal");
+    if (!modal) return;
+    modal.classList.add("active");
+
+    var self = this;
+    setTimeout(function() {
+      self.initSignatureCanvas();
+    }, 100);
+  },
+
+  initSignatureCanvas: function() {
+    var canvas = document.getElementById("signatureCanvas");
+    if (!canvas) return;
+    this.signatureCanvas = canvas;
+    this.signatureCtx = canvas.getContext("2d");
+    
+    this.signatureCtx.clearRect(0, 0, canvas.width, canvas.height);
+    this.signatureCtx.lineWidth = 2.5;
+    this.signatureCtx.lineCap = "round";
+    this.signatureCtx.lineJoin = "round";
+    this.signatureCtx.strokeStyle = this.sigColor || "#0f172a";
+
+    var self = this;
+
+    function getPos(e) {
+      var rect = canvas.getBoundingClientRect();
+      var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      var clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: (clientX - rect.left) * (canvas.width / rect.width),
+        y: (clientY - rect.top) * (canvas.height / rect.height)
+      };
+    }
+
+    function startDraw(e) {
+      self.isDrawing = true;
+      var pos = getPos(e);
+      self.signatureCtx.beginPath();
+      self.signatureCtx.moveTo(pos.x, pos.y);
+      if (e.cancelable) e.preventDefault();
+    }
+
+    function draw(e) {
+      if (!self.isDrawing) return;
+      var pos = getPos(e);
+      self.signatureCtx.lineTo(pos.x, pos.y);
+      self.signatureCtx.stroke();
+      if (e.cancelable) e.preventDefault();
+    }
+
+    function stopDraw(e) {
+      self.isDrawing = false;
+    }
+
+    canvas.onmousedown = startDraw;
+    canvas.onmousemove = draw;
+    canvas.onmouseup = stopDraw;
+    canvas.onmouseleave = stopDraw;
+
+    canvas.ontouchstart = startDraw;
+    canvas.ontouchmove = draw;
+    canvas.ontouchend = stopDraw;
+  },
+
+  setSignatureColor: function(color) {
+    this.sigColor = color;
+    if (this.signatureCtx) {
+      this.signatureCtx.strokeStyle = color;
+    }
+  },
+
+  clearSignatureCanvas: function() {
+    if (this.signatureCanvas && this.signatureCtx) {
+      this.signatureCtx.clearRect(0, 0, this.signatureCanvas.width, this.signatureCanvas.height);
+    }
+  },
+
+  saveSignatureFromCanvas: function() {
+    if (!this.signatureCanvas) return;
+    var dataUrl = this.signatureCanvas.toDataURL("image/png");
+    if (!this.state.company) this.state.company = {};
+    this.state.company.digitalSignature = dataUrl;
+    this.state.company.showDigitalSignature = true;
+    this.saveState();
+    this.renderSignaturePreview();
+    document.getElementById("signaturePadModal").classList.remove("active");
+    this.showToast("Drawn signature saved and applied to bills!");
   },
 
 };

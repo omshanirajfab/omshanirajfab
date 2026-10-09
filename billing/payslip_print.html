@@ -556,6 +556,13 @@
               <div class="sign-subtitle">Received & Accepted</div>
             </div>
             <div class="sign-box">
+              <div style="height: 48px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 4px;">
+                ${(comp.showDigitalSignature !== false && comp.digitalSignature) ? `
+                  <img src="${comp.digitalSignature}" style="max-height: 46px; max-width: 140px; object-fit: contain;" alt="Digital Signature" />
+                ` : `
+                  <div style="height: 44px;"></div>
+                `}
+              </div>
               <div class="sign-line"></div>
               <div class="sign-title">For ${compName}</div>
               <div class="sign-subtitle">Authorized Signatory & Stamp</div>

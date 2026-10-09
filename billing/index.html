@@ -756,6 +756,44 @@
             <button type="button" class="btn btn-primary" onclick="OSFApp.saveCompanySettings()">💾 Save Invoice Rules</button>
           </div>
 
+                    <!-- Digital Signature & Official Stamp Card -->
+          <div class="card" style="border: 2px solid #818cf8; background: #f5f3ff; margin-bottom: 20px;">
+            <div class="card-header" style="background: #ede9fe; border-bottom: 1px solid #ddd6fe; display: flex; justify-content: space-between; align-items: center; margin: -20px -20px 16px -20px; padding: 12px 20px; border-radius: 8px 8px 0 0;">
+              <div class="card-title" style="color: #4338ca; display: flex; align-items: center; gap: 8px; margin: 0; font-size: 0.95rem;">
+                <span>🖋️</span>
+                <span>Digital Signature & Company Stamp</span>
+              </div>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 700; color: #4338ca; cursor: pointer; margin: 0;">
+                <input type="checkbox" id="settShowSignature" checked onchange="OSFApp.toggleDigitalSignature(this.checked)" />
+                <span>Show on Bills & Slips</span>
+              </label>
+            </div>
+            <div>
+              <p style="font-size: 0.82rem; color: #4338ca; margin-bottom: 12px; line-height: 1.4;">
+                Upload your digital signature / stamp PNG, or draw it live with mouse/touchpad to print directly on all Invoices and Salary Slips.
+              </p>
+
+              <!-- Signature Preview Box -->
+              <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+                <div id="sigPreviewBox" style="width: 190px; height: 80px; border: 2px dashed #a5b4fc; background: #ffffff; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 4px;">
+                  <span id="sigPlaceholderText" style="font-size: 0.75rem; color: #94a3b8; font-weight: 600;">No Signature Added</span>
+                  <img id="sigPreviewImg" src="" style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;" alt="Signature" />
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <label class="btn btn-primary btn-sm" style="cursor: pointer; background: #4f46e5; border-color: #4f46e5; margin: 0; font-weight: 700;">
+                      📤 Upload Signature / Stamp PNG
+                      <input type="file" accept="image/*" style="display: none;" onchange="OSFApp.handleSignatureUpload(this)" />
+                    </label>
+                    <button type="button" class="btn btn-outline btn-sm" style="color: #4f46e5; border-color: #a5b4fc; font-weight: 700;" onclick="OSFApp.openSignaturePadModal()">✍️ Draw Signature</button>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="OSFApp.removeDigitalSignature()" title="Delete current signature">🗑️ Remove</button>
+                  </div>
+                  <span style="font-size: 0.72rem; color: #6b7280;">Supports PNG, JPG (Transparent PNG recommended)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Multi-Device Real-Time Cloud Sync Card -->
           <div class="card" style="border: 2px solid #38bdf8; background: #f0f9ff; margin-bottom: 20px;">
             <div class="card-header" style="background: #e0f2fe; border-bottom: 1px solid #bae6fd; display: flex; justify-content: space-between; align-items: center; margin: -20px -20px 16px -20px; padding: 12px 20px; border-radius: 8px 8px 0 0;">
@@ -799,7 +837,38 @@
 
   </div>
 
-    <!-- ================= EMPLOYEE MODAL ================= -->
+      <!-- ================= SIGNATURE PAD MODAL ================= -->
+  <div id="signaturePadModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 540px;">
+      <div class="modal-header">
+        <h3 style="font-size: 1.1rem; font-weight: 700;">✍️ Draw Digital Signature / Stamp</h3>
+        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('signaturePadModal').classList.remove('active')">✕</button>
+      </div>
+      <div class="modal-body" style="text-align: center;">
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">
+          Use your mouse, trackpad, or stylus inside the box below to draw your signature:
+        </p>
+        <div style="border: 2px dashed #4f46e5; background: #ffffff; border-radius: 8px; display: inline-block; box-shadow: inset 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 12px;">
+          <canvas id="signatureCanvas" width="480" height="180" style="touch-action: none; cursor: crosshair; display: block;"></canvas>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <span style="font-size: 0.8rem; font-weight: 600;">Ink Color:</span>
+            <button type="button" class="btn btn-sm" style="background:#0f172a; width: 22px; height: 22px; padding:0; border-radius:50%; border:2px solid #fff;" onclick="OSFApp.setSignatureColor('#0f172a')"></button>
+            <button type="button" class="btn btn-sm" style="background:#1e3a8a; width: 22px; height: 22px; padding:0; border-radius:50%; border:2px solid #fff;" onclick="OSFApp.setSignatureColor('#1e3a8a')"></button>
+            <button type="button" class="btn btn-sm" style="background:#0369a1; width: 22px; height: 22px; padding:0; border-radius:50%; border:2px solid #fff;" onclick="OSFApp.setSignatureColor('#0369a1')"></button>
+          </div>
+          <button type="button" class="btn btn-outline btn-sm" onclick="OSFApp.clearSignatureCanvas()">🧹 Clear Canvas</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="document.getElementById('signaturePadModal').classList.remove('active')">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="OSFApp.saveSignatureFromCanvas()">💾 Apply & Save Signature</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= EMPLOYEE MODAL ================= -->
   <div id="employeeModal" class="modal-overlay">
     <div class="modal-content" style="max-width: 650px;">
       <div class="modal-header">
